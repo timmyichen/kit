@@ -1,0 +1,49 @@
+lightshades = #F8F8F5
+lightaccent = #84B9E0
+mainbrand = #4D8BD6
+darkaccent = #7080CC
+darkshades = #302F7F
+
+body 
+  background lightshades
+  
+  .required-star
+    color #DB2828
+    margin -.2em 0 0 .2em
+
+#navbar
+  background transparent
+  color darkshades
+  border none
+  .item
+    color darkshades
+    border none !important
+    .button
+      background darkaccent
+
+.alert-container
+  position absolute
+  top 60px
+  left 50%
+  z-index 10 !important
+  visibility 1
+  transition all 200ms
+  .hidden
+    visibility 0
+    display none
+
+#my-info
+  div.ui.card
+    div.card-controls
+      position absolute
+      right 5px
+      top 5px
+      display flex
+      flex-direction column
+      button
+        margin 5px
+        padding 5px
+
+.profile-page
+  .subtitle
+    margin-top 0
