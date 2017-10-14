@@ -18,8 +18,8 @@ class Navbar extends Component {
         <Menu.Item as="a">
           Address Book
         </Menu.Item>
-        <Menu.Item as="a">
-          Friends
+        <Menu.Item>
+          <Link to="/my-friends">Friends</Link>
         </Menu.Item>
         <Menu.Item as="a">
           Account

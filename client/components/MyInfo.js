@@ -15,7 +15,6 @@ class MyInfo extends Component {
     this.state = {
       myInfos: [],
       message: null,
-      messageTimeoutID: null,
     };
     this.updateInfo = this.updateInfo.bind(this);
     // this.setMessage = this.setMessage.bind(this);

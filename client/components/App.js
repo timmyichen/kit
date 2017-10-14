@@ -7,6 +7,7 @@ import Welcome from './Welcome';
 import MyInfo from './MyInfo';
 import PublicUserProfile from './PublicUserProfile';
 import Dashboard from './Dashboard';
+import FriendsPage from './FriendsPage';
 
 import getUser from '../actions/getUser';
 
@@ -58,6 +59,14 @@ class App extends Component {
           <Route exact path="/my-info"
             render={() => 
               <MyInfo user={user} />
+            }
+          />
+          <Route exact path="/my-friends"
+            render={() =>
+              <FriendsPage
+                user={user}
+                refreshUser={this.refreshUser}
+              />
             }
           />
           <Route path="/profile/:username"

@@ -14,7 +14,7 @@ router.get('/profile/:username', requireLogin, (req, res) => {
       { _id: 1, firstName: 1, lastName: 1, username: 1, }
     )
     .then(response => {
-      res.send(response);
+      return res.send(response);
     })
     .catch(err => {
       logger.error(`in fetching profile w/username ${username}`, err);
@@ -22,6 +22,23 @@ router.get('/profile/:username', requireLogin, (req, res) => {
     });
 });
 
+/*  /api/user/friends-list
+    GET
+    array of friends (firstname, lastname, username) */
+router.get('/friends-list', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
+  const friendsList = req.user.friends.map(friend => ObjectID(friend));
+  db.collection('users').find(
+    { _id: { $in: friendsList }},
+    { _id: 1, firstName: 1, lastName: 1, lastLogin: 1, username: 1, birthday: 1 }
+  ).toArray((err, docs) => {
+    if (err) {
+      logger.error(`in fetching friends list for ${req.user._id + ''}`, err);
+      return res.status(500).send({ reason: 'unknown' })
+    }
+    return res.send(docs);
+  });
+})
 
 /*  /api/user/add
     POST
