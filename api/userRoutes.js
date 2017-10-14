@@ -8,7 +8,7 @@ const requireLogin = require('../middlewares/requireLogin');
     public information about the user */
 router.get('/profile/:username', requireLogin, (req, res) => {
   const { username } = req.params;
-  const db = req.app.locals.db;
+  const { db, logger } = req.app.locals;
   db.collection('users').findOne(
       { username },
       { _id: 1, firstName: 1, lastName: 1, username: 1, }
@@ -17,7 +17,7 @@ router.get('/profile/:username', requireLogin, (req, res) => {
       res.send(response);
     })
     .catch(err => {
-      console.log(`ERROR in fetching profile w/username ${username}: ${err}`);
+      logger.error(`in fetching profile w/username ${username}`, err);
       return res.status(500).send({ error: true, reason: 'unknown' });
     });
 });
@@ -27,6 +27,7 @@ router.get('/profile/:username', requireLogin, (req, res) => {
     POST
     Username of friend to be added */
 router.post('/add/', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (req.user.blockedBy.includes(targetID)) {
@@ -34,7 +35,6 @@ router.post('/add/', requireLogin, (req, res) => {
   } else if (req.user.requested.includes(targetID)) {
     return res.status(403).send({ error: true, reason: 'duplicate-request' });
   }
-  const db = req.app.locals.db;
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
     { $push: { requested: targetID } }
@@ -43,15 +43,14 @@ router.post('/add/', requireLogin, (req, res) => {
       { _id: ObjectID(targetID) },
       { $push: { pendingRequests: userID } }
     ).then(response => {
-      console.log(`${req.user.email}(${userID}) requested ${req.body.name}(${targetID}) as a friend`);
+      logger.info(`${req.user.email}(${userID}) requested ${req.body.name}(${targetID}) as a friend`);
       return res.status(200).send({ success: true });
     }).catch(err => {
-      console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-      console.log(`in adding ${userID} to 'pendingRequests' of ${targetID}: ${err}`);
+      logger.error(`in adding ${userID} to 'pendingRequests' of ${targetID}`, err, {severe: 'data'});
       return res.status(500).send({ error: true, reason: 'unknown' });
     });
   }).catch(err => {
-    console.log(`ERROR in adding ${targetID} to 'requested' of ${userID}: ${err}`);
+    logger.error(`in adding ${targetID} to 'requested' of ${userID}`, err);
     return res.status(500).send({ error: true, reason: 'unknown' });
   });
 });
@@ -60,12 +59,12 @@ router.post('/add/', requireLogin, (req, res) => {
     POST
     Username of friend to be rescinded from requested list */
 router.post('/rescind/', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (!req.user.requested.includes(targetID)) {
     return res.status(403).send({ error: true, reason: 'no-request-found' });
   }
-  const db = req.app.locals.db;
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
     { $pull: { requested: targetID } }
@@ -74,15 +73,14 @@ router.post('/rescind/', requireLogin, (req, res) => {
       { _id: ObjectID(targetID) },
       { $pull: { pendingRequests: userID } }
     ).then(response => {
-      console.log(`${req.user.email}(${userID}) rescinded friend request to ${req.body.name}(${targetID})`);
+      logger.info(`${req.user.email}(${userID}) rescinded friend request to ${req.body.name}(${targetID})`);
       return res.status(200).send({ success: true });
     }).catch(err => {
-      console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-      console.log(`in removing ${userID} from 'pendingRequests' of ${targetID}: ${err}`);
+      logger.error(`removing ${userID} from 'pendingRequests' of ${targetID}`, err, {severe: 'data'});
       return res.status(500).send({ error: true, reason: 'unknown' });
     });
   }).catch(err => {
-    console.log(`ERROR in removing ${targetID} from 'requested' of ${userID}: ${err}`);
+    logger.error(`in removing ${targetID} from 'requested' of ${userID}`, err);
     return res.status(500).send({ error: true, reason: 'unknown' });
   });
 });
@@ -131,11 +129,11 @@ router.post('/rescind/', requireLogin, (req, res) => {
     names and usernames of people who have requested user */
 router.get('/pending-requests', requireLogin, (req, res) => {
   const reqsArray = req.user.pendingRequests.map(id => ObjectID(id));
-  const db = req.app.locals.db;
+  const { db, logger } = req.app.locals;
   const projection = { _id: 1, firstName: 1, lastName: 1, username: 1 };
   db.collection('users').find({ _id: { $in: reqsArray }}, projection).toArray((err, docs) => {
     if (err) {
-      console.log(`ERROR in getting pending requests for ${req.user._id}: ${err}`);
+      logger.error(`in getting pending requests for ${req.user._id}`, err);
       return res.status(500).send({ error: true, reason: 'unknown' });
     }
     res.send(docs);
@@ -146,12 +144,12 @@ router.get('/pending-requests', requireLogin, (req, res) => {
     POST
     ID of friend to confirm */
 router.post('/accept-friend', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (!req.user.pendingRequests.includes(targetID)){
     return res.status(403).send({ error: true, reason: 'no-request-found' });
   }
-  const db = req.app.locals.db;
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
     { $push: { friends: targetID }, $pull: { pendingRequests: targetID } }
@@ -160,15 +158,14 @@ router.post('/accept-friend', requireLogin, (req, res) => {
       { _id: ObjectID(targetID) },
       { $push: { friends: userID }, $pull: { requested: userID } }
     ).then(response => {
-      console.log(`${userID} accepted friend request from ${targetID}`);
+      logger.info(`${userID} accepted friend request from ${targetID}`);
       res.send({ success: true });
     }).catch(err => {
-      console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-      console.log(`in moving ${userID} from 'pendingRequests' to 'friends' of ${targetID}: ${err}`);
+      logger.error(`in moving ${userID} from 'pendingRequests' to 'friends' of ${targetID}`, err, {severe: 'data'});
       return res.status(500).send({ error: true, reason: 'unknown' });
     });
   }).catch(err => {
-    console.log(`ERROR in moving ${targetID} from 'requested' to 'friends' of ${userID}: ${err}`);
+    logger.error(`in moving ${targetID} from 'requested' to 'friends' of ${userID}`, err);
     return res.status(500).send({ error: true, reason: 'unknown' });
   });
 });
@@ -177,12 +174,12 @@ router.post('/accept-friend', requireLogin, (req, res) => {
     POST
     ID of friend to decline */
 router.post('/decline-friend', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (!req.user.pendingRequests.includes(targetID)){
     return res.status(403).send({ error: true, reason: 'no-request-found' });
   }
-  const db = req.app.locals.db;
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
     { $pull: { pendingRequests: targetID } }
@@ -191,15 +188,14 @@ router.post('/decline-friend', requireLogin, (req, res) => {
       { _id: ObjectID(targetID) },
       { $pull: { requested: userID } }
     ).then(response => {
-      console.log(`${userID} declined friend request from ${targetID}`);
+      logger.info(`${userID} declined friend request from ${targetID}`);
       res.send({ success: true });
     }).catch(err => {
-      console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-      console.log(`in removing ${userID} from 'requested' of ${targetID}: ${err}`);
+      logger.error(`in removing ${userID} from 'requested' of ${targetID}`, err, {severe: 'data'});
       return res.status(500).send({ error: true, reason: 'unknown' });
     });
   }).catch(err => {
-    console.log(`ERROR in removing ${targetID} from 'pendingRequests' of ${userID}: ${err}`);
+    logger.error(`in removing ${targetID} from 'pendingRequests' of ${userID}`, err);
     return res.status(500).send({ error: true, reason: 'unknown' });
   });
 });

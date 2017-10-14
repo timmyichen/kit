@@ -3,7 +3,7 @@ const ObjectID = require('mongodb').ObjectID;
 //if they have not finished setting up their account, redirect them to registration
 
 module.exports = (req, res, next) => {
-	const db = req.app.locals.db;
+	const { db, logger } = req.app.locals;
 	if (!req.user || req.path === '/welcome') {
 	  return next();
 	}
@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
     .find({ _id: ObjectID(req.user._id) })
     .toArray((err, docs) => {
       if (err) {
-        console.log(err);
+        logger.error(`error in 'require setup' middleware db query`, err);
         return res.status(500).send({ error: 'unexpected error, try again' });
       }
       if (!docs[0].firstName || !docs[0].lastName || !docs[0].username ||

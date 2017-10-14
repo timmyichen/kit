@@ -3,6 +3,7 @@ const passport = require('passport');
 const requiresWelcome = require('../../server-utils/validation').requiresWelcome;
 
 module.exports = app => {
+  const logger = app.locals.logger;
   app.get('/auth/google', passport.authenticate('google', {
     scope: ['profile', 'email'],
   }));
@@ -32,7 +33,7 @@ module.exports = app => {
   app.get('/auth/logout', (req, res) => {
     if (req.user) {
       req.session.destroy(err => {
-        if (err) console.log(`error on destroying session for user with email ${req.user.userEmail}`)
+        if (err) logger.error(`error on destroying session for user with email ${req.user.userEmail}`)
         res.redirect('/');
       });
     }

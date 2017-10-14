@@ -12,12 +12,15 @@ const { validateContactInfoForm, containsErrors } = require('../client/utils/con
     GET
     Array of user’s contact info  */
 router.get('/my-info/', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
   const ownedByUser = req.user.owns.map(id => ObjectID(id));
-  const db = req.app.locals.db;
   db.collection('contactinfos').find({ _id: { $in: ownedByUser }}).toArray((err, docs) => {
-    if (err) console.log(`error at /api/my-info/ for user ${req.user.email}: ${err}`);
+    if (err) {
+      logger.error(`at /api/my-info/ for user ${req.user.email}`, err);
+      res.send({ error: true, reason: 'unknown' });
+    }
     res.send(docs);
-  })
+  });
 });
 
 /*  /api/my-info/upsert
@@ -25,15 +28,15 @@ router.get('/my-info/', requireLogin, (req, res) => {
     Object of user’s new contact info to be added OR updated
     updated objects will include an _id field to indicate old ID */
 router.post('/my-info/upsert', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
   const obj = req.body;
   const errors = validateContactInfoForm(obj);
   if (containsErrors(errors)) {
-    console.log(`${req.user.email} tried to create new contactinfo w/ bad information: ${errors}`);
+    logger.error(`${req.user.email} tried to create new contactinfo w/ bad information`, errors);
     return res.status(403).send(`There was an error in submitting your fom, either due to an actual error
       or because you might be trying to be naughty.  Go back and try again.`);
   }
   const id = req.user._id + '';
-  const db = req.app.locals.db;
   obj.owner = id;
   obj.lastUpdated = Date.now();
   obj.sharedWith = obj.sharedWith || [];
@@ -45,15 +48,16 @@ router.post('/my-info/upsert', requireLogin, (req, res) => {
         { multi: true }
       )
       .then(response => {
-        upsertContactInfo(req, res, db, obj);
-      })
+        upsertContactInfo(req, res, obj);
+      });
   } else {
-    upsertContactInfo(req, res, db, obj);
+    upsertContactInfo(req, res, obj);
   }
 });
 
 //helper function for /my-info/upsert
-function upsertContactInfo(req, res, db, obj) {
+function upsertContactInfo(req, res, obj) {
+  const { db, logger } = req.app.locals;
   let promise, action;
   const { data, primary, label, lastUpdated, notes } = obj;
   if (obj._id) {
@@ -70,16 +74,15 @@ function upsertContactInfo(req, res, db, obj) {
         { _id: ObjectID(req.user._id) },
         { $push: { owns: insertedID } }
       ).catch(err => {
-        console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-        console.log(`in adding new contactinfo ${insertedID} to 'owns' of ${req.user._id}: ${err}`);
+        logger.error(`in adding new contactinfo ${insertedID} to 'owns' of ${req.user._id}`, err, {severe: 'data'});
       });
     });
   }
   promise.then(response => {
-    console.log(`${req.user.email} ${action} new contact info of type ${obj.type}`);
+    logger.info(`${req.user.email} ${action} new contact info of type ${obj.type}`);
     res.status(200).redirect('/my-info');
   })
-  .catch(err => console.log(`error in ${action} new contact info: ${err}`));
+  .catch(err => logger.error(`in ${action} new contact info`, err));
 }
 
 /*
@@ -89,8 +92,8 @@ ID of info to be deleted
 */
 
 router.post('/my-info/delete', (req, res) => {
+  const { db, logger } = req.app.locals;
   const id = ObjectID(req.body.id);
-  const db = req.app.locals.db;
   const owner = req.user._id + '';
   db.collection('contactinfos').remove({ _id: id , owner: owner })
     .then(response => {
@@ -98,16 +101,15 @@ router.post('/my-info/delete', (req, res) => {
         { _id: ObjectID(owner) },
         { $pull: { owns: id + '' } }
       ).then(response => {
-        console.log(`User ${req.user.email} deleted contact info of type ${req.body.type} called '${req.body.label}'`);
+        logger.info(`User ${req.user.email} deleted contact info of type ${req.body.type} called '${req.body.label}'`);
         return res.status(200).send({ success: true });
       }).catch(err => {
-        console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-        console.log(`in removing contactinfo ${id} from 'owns' of ${owner}: ${err}`);
+        logger.error(`in removing contactinfo ${id} from 'owns' of ${owner}`, err, {severe: 'data'});
         return res.status(400).send('unknown error in deletion');
       });
     })
     .catch(err => {
-      console.log(`error in deleting contact info by ${req.user.email} on CI with ID ${req.body.id}: ${err}`);
+      logger.error(`in deleting contact info by ${req.user.email} on CI with ID ${req.body.id}`, err);
       return res.status(400).send('unknown error in deletion');
     });
 });

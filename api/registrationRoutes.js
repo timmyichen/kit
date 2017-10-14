@@ -12,7 +12,7 @@ const finishedSetup = require('../middlewares/finishedSetup');
 const utils = require('../server-utils/validation');
 
 router.get('/check-username/', requireLogin, (req, res) => {
-  const db = req.app.locals.db;
+  const { db, logger } = req.app.locals;
   const username = req.query.username;
   
   utils.validateUsername(db, username)
@@ -20,17 +20,17 @@ router.get('/check-username/', requireLogin, (req, res) => {
       res.send({ valid: response });
     })
     .catch(err => {
-      console.log(err);
-      res.send({ error: true, message: err })
-    })
+      logger.error(`in checking username ${username}`, err);
+      res.send({ error: true, message: err });
+    });
 });
 
 router.post('/new', requireLogin, finishedSetup, (req, res) => {
-  const db = req.app.locals.db;
+  const { db, logger } = req.app.locals;
   utils.validateRegistration(req.body, db).then(errors => {
     for(let field in errors) {
       if (errors[field]) {
-        console.log(`${req.user.email} tried to submit bad information: ${field}:${errors[field]}`)
+        logger.error(`${req.user.email} tried to submit bad information: ${field}:${errors[field]}`, errors);
         res.status(403);
         return res.send(`There was an error in submitting your form, either due to an actual
          error or because you might be trying to be naughty.  Go back and try again.`);
@@ -48,17 +48,17 @@ router.post('/new', requireLogin, finishedSetup, (req, res) => {
       }}
     )
     .then(docs => {
-      console.log(`${req.user.email} completed registration without issue`)
+      logger.info(`${req.user.email} completed registration without issue`);
       res.status(200);
-      res.send('/')
+      res.send('/');
     })
     .catch(err => {
-      console.log(`ERROR in completing registration for ${req.user.email}:  ${err}`);
+      logger.error(`ERROR in completing registration for ${req.user.email}`, err);
       res.status(403);
       return res.send(`There was an error in submitting your form, either due to an actual
        error or because you might be trying to be naughty.  Go back and try again.`);
-    })
-  })
+    });
+  });
 });
 
 module.exports = router;

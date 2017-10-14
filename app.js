@@ -7,6 +7,8 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const winston = require('winston');
+require('winston-mongodb');
 
 const apiRoutes = require('./api/index');
 const requireSetup = require('./middlewares/requireSetup');
@@ -16,11 +18,23 @@ const app = express();
 MongoClient.connect(config.keys.mongoURI, (err, db) => {
   if (err) console.log(`Failed to connect to the database: ${err.stack}`);
   
+  const logger = new (winston.Logger)({
+    transports: [
+      new winston.transports.Console({ timestamp: true }),
+      new winston.transports.MongoDB({
+        autoReconnect: true,
+        collection: 'logs',
+        db: db,
+      })
+    ]
+  });
+  
   app.locals.db = db;
+  app.locals.logger = logger;
   
   app.use(cookieParser());
-  app.use(bodyParser.json())
-  app.use(bodyParser.urlencoded({extended: true}))
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({extended: true}));
 
   app.use(session({
     secret: config.keys.sessionKey,
@@ -31,7 +45,7 @@ MongoClient.connect(config.keys.mongoURI, (err, db) => {
   }));
   
   app.use(express.static('public'));
-  require('./services/auth/passport');
+  require('./services/auth/passport')(app);
   
   app.use(passport.initialize());
   app.use(passport.session());
@@ -51,10 +65,8 @@ MongoClient.connect(config.keys.mongoURI, (err, db) => {
     });
   });
 
-  
-  console.log('Successfully connected to db on server start');
-  
+  logger.info('Successfully connected to db on server start');
   app.listen(config.PORT, function () {
-    console.log(`App currently running; navigate to localhost:${config.PORT} in a web browser.`);
+    logger.info(`App currently running; navigate to localhost:${config.PORT} in a web browser.`);
   });
 });
