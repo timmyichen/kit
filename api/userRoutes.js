@@ -178,7 +178,7 @@ router.post('/accept-friend', requireLogin, (req, res) => {
     ID of friend to decline */
 router.post('/decline-friend', requireLogin, (req, res) => {
   const targetID = req.body.targetID;
-  const userID = req.user._id;
+  const userID = req.user._id + '';
   if (!req.user.pendingRequests.includes(targetID)){
     return res.status(403).send({ error: true, reason: 'no-request-found' });
   }

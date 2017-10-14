@@ -6,25 +6,24 @@ class PendingFriendRequests extends Component {
   constructor(props) {
     super(props);
     
-    this.acceptRequest = this.acceptRequest.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
-  acceptRequest() {
+  handleClick(action) {
     const { req, refreshUser, setMessage, refreshRequests } = this.props;
-    axios.post('/api/user/accept-friend', { targetID: req._id })
+    const pastTense = { accept: 'accepted', decline: 'declined' };
+    axios.post(`/api/user/${action}-friend`, { targetID: req._id })
       .then(response => {
         const { success, reason } = response.data;
         const params = {};
-        params.content = success ? `Success: accepted ${req.firstName} ${req.lastName}'s friend request`
+        params.content = success ? `Success: ${pastTense[action]} ${req.firstName} ${req.lastName}'s friend request`
           : `Error: ${reason}: Try again later.`;
-        params[success ? 'positive' : 'negative'] = true;
+        const buttonType = success ? action === 'accept' ? 'positive' : '' : 'negative';
+        params[buttonType] = true;
         params.duration = success ? 3500 : 5000;
         setMessage(params);
         refreshUser();
         refreshRequests();
       });
-  }
-  declineRequest() {
-    
   }
   render() {
     const { firstName, lastName, username } = this.props.req;
@@ -37,8 +36,8 @@ class PendingFriendRequests extends Component {
         </Card.Content>
         <Card.Content extra>
           <div className="ui two buttons">
-            <Button basic color="green" onClick={this.acceptRequest}>Accept</Button>
-            <Button basic color="red">Decline</Button>
+            <Button basic color="green" onClick={() => this.handleClick('accept')}>Accept</Button>
+            <Button basic color="red" onClick={() => this.handleClick('decline')}>Decline</Button>
           </div>
         </Card.Content>
       </Card>
