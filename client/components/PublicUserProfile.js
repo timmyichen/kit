@@ -5,27 +5,40 @@ import axios from 'axios';
 
 import getProfile from '../actions/getProfile';
 import getUser from '../actions/getUser';
+import MessageHeader from './MessageHeader';
+import ConfirmActionModal from './ConfirmActionModal';
+
+import { setMessage } from '../utils/messages';
+import translateAPIerrors from '../utils/translateAPIerrors';
 
 class PublicUserProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      message: null,
       profile: null,
       loading: true,
       processingFriendRequest: false,
       friendRequestSent: false,
+      isFriends: false,
+      isBlocked: false,
+      fetchDataInterval: null,
     };
     
-    this.fetchInitialData = this.fetchInitialData.bind(this);
-    this.checkIfRequested = this.checkIfRequested.bind(this);
+    this.setMessage = setMessage.bind(this);
+    this.fetchData = this.fetchData.bind(this);
     this.requestFriend = this.requestFriend.bind(this);
-    this.block = this.block.bind(this);
-    this.unblock = this.unblock.bind(this);
+    this.handlePrimaryClick = this.handlePrimaryClick.bind(this);
   }
   componentDidMount() {
-    this.fetchInitialData();
+    this.fetchData();
+    const id = setInterval(this.fetchData, 30000);
+    this.setState({ fetchDataInterval: id });
   }
-  fetchInitialData() {
+  componentWillUnmount() {
+    clearInterval(this.state.fetchDataInterval);
+  }
+  fetchData() {
     const { username } = this.props.routerInfo.match.params;
     getProfile(username).then(profile => {
       getUser().then(user => {
@@ -33,6 +46,8 @@ class PublicUserProfile extends Component {
           profile,
           loading: false,
           friendRequestSent: this.checkIfRequested(profile, user),
+          isFriends: this.checkIfFriends(profile, user),
+          isBlocked: this.checkIfBlocked(profile, user),
         });
       });
     });
@@ -40,49 +55,90 @@ class PublicUserProfile extends Component {
   checkIfRequested(profile, user) {
     return user.requested.includes(profile._id);
   }
+  checkIfFriends(profile, user) {
+    return user.friends.includes(profile._id);
+  }
+  checkIfBlocked(profile, user) {
+    return user.blocked.includes(profile._id);
+  }
   requestFriend(action) {
     this.setState({ processingFriendRequest: true }, () => {
-      const { _id, firstName, lastName } = this.state.profile;
-      axios.post(`/api/user/${action}`, { targetID: _id, name: `${firstName} ${lastName}` })
+      const { profile } = this.state;
+      const { _id, firstName, lastName } = profile;
+      const fullName = `${firstName} ${lastName}`;
+      axios.post(`/api/user/${action}`, { targetID: _id, name: `${fullName}` })
         .then(response => {
           if (response.data.success) {
             this.props.refreshUser();
-            this.setState({ processingFriendRequest: false, friendRequestSent: action === 'add' });
+            this.setState({
+              processingFriendRequest: false,
+              friendRequestSent: action === 'add',
+              isBlocked: action === 'block',
+            });
+            const actionString = {
+              add: `Requested ${fullName} as a friend`,
+              remove: `Removed ${fullName} as a friend`,
+              rescind: `Cancelled friend request to ${fullName}`,
+              block: `Blocked ${fullName}`,
+              unblock: `Unblocked ${fullName}`
+            };
+            this.setMessage({
+              content: actionString[action],
+              positive: true,
+              duration: 4500
+            });
           }
+        }).catch(err => {
+          this.setState({ processingFriendRequest: false });
+          this.setMessage({
+            content: `Error: ${translateAPIerrors(err.response.data.reason)}`,
+            negative: true,
+            duration: 4500
+          });
         });
     });
   }
-  block() {
-    
-  }
-  unblock() {
-    
+  handlePrimaryClick() {
+    const { isFriends, friendRequestSent } = this.state;
+    let action;
+    if (isFriends) {
+      action = 'remove';
+    } else if (friendRequestSent) {
+      action = 'rescind';
+    } else {
+      action = 'add';
+    }
+    this.requestFriend(action);
   }
   render() {
-    const { loading, processingFriendRequest, friendRequestSent } = this.state;
+    const { loading, processingFriendRequest, friendRequestSent, isFriends, message, isBlocked, profile } = this.state;
     const { user } = this.props;
     if (loading) {
       return <Container></Container>;
     } else if (!this.state.profile || !this.props.user) {
       return <Container><Header as="h1">Profile Not Found</Header></Container>;
     }
-    const { firstName, lastName, username } = this.state.profile;
+    const { firstName, lastName, username } = profile;
+    const fullName = `${firstName} ${lastName}`;
     return (
       <Container className="profile-page">
+        <MessageHeader message={message} />
         <Header as="h1">{firstName} {lastName}</Header>
         <Header as="h3" className="subtitle">{username}</Header>
         <Button primary
-          disabled={user.username === username || processingFriendRequest}
-          content={friendRequestSent ? 'Cancel Friend Request' : 'Add Friend'}
+          disabled={user.username === username || processingFriendRequest || isBlocked}
+          content={isFriends ? 'Remove Friend' : '' || friendRequestSent ? 'Cancel Friend Request' : 'Add Friend'}
           icon="add user"
           labelPosition="right"
-          onClick={friendRequestSent ? () => this.requestFriend('rescind') : () => this.requestFriend('add')}
+          onClick={this.handlePrimaryClick}
         />
-        <Button secondary
-          disabled={user.username === username}
-          content="Block"
-          icon="ban"
-          labelPosition="right"
+        <ConfirmActionModal
+          triggerProps={{secondary: true, labelPosition: 'right'}}
+          triggerText={isBlocked ? 'Unblock' : 'Block'}
+          triggerIcon="ban"
+          action={`${isBlocked ? 'unblock' : 'block'} ${fullName}`}
+          reversible={true}
+          onConfirm={() => this.requestFriend(isBlocked ? 'unblock' : 'block')}
         />
       </Container>
     );

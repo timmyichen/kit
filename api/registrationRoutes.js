@@ -32,8 +32,8 @@ router.post('/new', requireLogin, finishedSetup, (req, res) => {
       if (errors[field]) {
         logger.error(`${req.user.email} tried to submit bad information: ${field}:${errors[field]}`, errors);
         res.status(403);
-        return res.send(`There was an error in submitting your form, either due to an actual
-         error or because you might be trying to be naughty.  Go back and try again.`);
+        return res.send({ reason: `There was an error in submitting your form, either due to an actual
+         error or because you might be trying to be naughty.  Go back and try again.` });
       }
     }
     const data = req.body;
@@ -55,8 +55,8 @@ router.post('/new', requireLogin, finishedSetup, (req, res) => {
     .catch(err => {
       logger.error(`ERROR in completing registration for ${req.user.email}`, err);
       res.status(403);
-      return res.send(`There was an error in submitting your form, either due to an actual
-       error or because you might be trying to be naughty.  Go back and try again.`);
+      return res.send({ reason: `There was an error in submitting your form, either due to an actual
+       error or because you might be trying to be naughty.  Go back and try again.` });
     });
   });
 });

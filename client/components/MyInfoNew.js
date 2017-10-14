@@ -10,6 +10,7 @@ import AlertMessage from './AlertMessage';
 
 import { validateContactInfoForm, containsErrors } from '../utils/contactInfoValidation';
 import { parsePhoneNumber } from '../utils/formValidation';
+import translateAPIerrors from '../utils/translateAPIerrors';
 
 const defaultData = {
   empty: {},
@@ -175,6 +176,12 @@ class MyInfoNew extends Component {
           updateInfo();
           this.onClose();
         }
+      }).catch(err => {
+        this.setMessage({
+          content: `Error: ${translateAPIerrors(err.response.data.reason)}`,
+          negative: true,
+          duration: 4500
+        });
       });
   }
   render() {

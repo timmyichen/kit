@@ -7,6 +7,10 @@ import { Redirect } from 'react-router-dom';
 import getUser from '../actions/getUser';
 import { checkUsername } from '../utils/formValidation';
 import { validateWelcomeForm } from '../utils/welcomeValidation';
+import MessageHeader from './MessageHeader';
+
+import { setMessage } from '../utils/messages';
+import translateAPIerrors from '../utils/translateAPIerrors';
 
 const inputFields = [
   { name: 'firstName', label: 'First Name' },
@@ -28,7 +32,7 @@ class Welcome extends Component {
     this.state = {
       processing: false,
       proceed: false,
-      success: false,
+      message: null,
       form: {
         firstName: '',
         lastName: '',
@@ -41,6 +45,7 @@ class Welcome extends Component {
       error: {}
     };
     
+    this.setMessage = setMessage.bind(this);
     this.onChangeInput = this.onChangeInput.bind(this);
     this.renderInputField = this.renderInputField.bind(this);
     this.toggleCheckbox = this.toggleCheckbox.bind(this);
@@ -114,8 +119,8 @@ class Welcome extends Component {
             };
           }
           this.submitForm();
-        })
-      })
+        });
+      });
     });
   }
   
@@ -123,20 +128,30 @@ class Welcome extends Component {
     axios.post('/api/registration/new', this.state.form)
       .then(res => {
         if (res.status === 200) {
-          this.setState({ success: true }, () => {
-            setTimeout(() => { this.setState({ proceed: true })}, 2500);
+          this.setMessage({
+            content: `Successfully completed registration! Redirecting..`,
+            positive: true,
+            duration: 4000
           });
+          setTimeout(() => { this.setState({ proceed: true })}, 3500);
         }
+      }).catch(err => {
+        this.setMessage({
+          content: `Error: ${translateAPIerrors(err.response.data.reason)}`,
+          negative: true,
+          duration: 6000
+        });
       });
   }
   
   render() {
-    const { form, error, proceed, success, processing } = this.state;
+    const { form, error, proceed, processing, message } = this.state;
     if(proceed) {
       return <Redirect to="/" />;
     }
     return (
       <div id="welcome">
+        <MessageHeader message={message} />
         <h1>Complete your registration</h1>
         <Form>
           {inputFields.map(this.renderInputField)}
@@ -184,9 +199,6 @@ class Welcome extends Component {
             Complete Registration
           </Form.Button>
         </Form>
-        { success ? <Message success
-          header="Success!"
-          content="Your information has been saved! Redirecting.." /> : '' }
       </div>
     );
   }

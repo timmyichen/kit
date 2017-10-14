@@ -17,7 +17,7 @@ router.get('/my-info/', requireLogin, (req, res) => {
   db.collection('contactinfos').find({ _id: { $in: ownedByUser }}).toArray((err, docs) => {
     if (err) {
       logger.error(`at /api/my-info/ for user ${req.user.email}`, err);
-      res.send({ error: true, reason: 'unknown' });
+      res.send({ reason: 'unknown' });
     }
     res.send(docs);
   });
@@ -85,12 +85,9 @@ function upsertContactInfo(req, res, obj) {
   .catch(err => logger.error(`in ${action} new contact info`, err));
 }
 
-/*
-/api/my-info/delete
-POST
-ID of info to be deleted
-*/
-
+/*  /api/my-info/delete
+    POST
+    ID of info to be deleted */
 router.post('/my-info/delete', (req, res) => {
   const { db, logger } = req.app.locals;
   const id = ObjectID(req.body.id);
@@ -105,12 +102,12 @@ router.post('/my-info/delete', (req, res) => {
         return res.status(200).send({ success: true });
       }).catch(err => {
         logger.error(`in removing contactinfo ${id} from 'owns' of ${owner}`, err, {severe: 'data'});
-        return res.status(400).send('unknown error in deletion');
+        return res.status(400).send({ reason: 'unknown error in deletion' });
       });
     })
     .catch(err => {
       logger.error(`in deleting contact info by ${req.user.email} on CI with ID ${req.body.id}`, err);
-      return res.status(400).send('unknown error in deletion');
+      return res.status(400).send({ reason: 'unknown error in deletion' });
     });
 });
 
@@ -124,5 +121,11 @@ POST
 ID of info to be unshared, username of friend shared to
 
 */
+
+
+
+/*  /api/my-info/ping
+    POST
+    ID of info to be pinged */
 
 module.exports = router;

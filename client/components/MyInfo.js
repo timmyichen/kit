@@ -5,6 +5,7 @@ import propTypes from 'prop-types';
 import getMyInfos from '../actions/getMyInfos';
 import MyInfoNew from './MyInfoNew';
 import MyInfoCard from './MyInfoCard';
+import MessageHeader from './MessageHeader';
 
 import { setMessage } from '../utils/messages';
 
@@ -31,7 +32,7 @@ class MyInfo extends Component {
     const { user } = this.props;
     return (
       <Container id="my-info">
-        <div className="alert-container">{message}</div>
+        <MessageHeader message={message} />
         <Header as="h1">My Contact Information</Header>
         <MyInfoNew
           user={user}

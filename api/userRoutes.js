@@ -18,7 +18,7 @@ router.get('/profile/:username', requireLogin, (req, res) => {
     })
     .catch(err => {
       logger.error(`in fetching profile w/username ${username}`, err);
-      return res.status(500).send({ error: true, reason: 'unknown' });
+      return res.status(500).send({ reason: 'unknown' });
     });
 });
 
@@ -31,9 +31,11 @@ router.post('/add/', requireLogin, (req, res) => {
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (req.user.blockedBy.includes(targetID)) {
-    return res.status(403).send({ error: true, reason: 'no-access' });
+    return res.status(403).send({ reason: 'no-access' });
   } else if (req.user.requested.includes(targetID)) {
-    return res.status(403).send({ error: true, reason: 'duplicate-request' });
+    return res.status(403).send({ reason: 'duplicate-request' });
+  } else if (req.user.friends.includes(targetID)) {
+    return res.status(403).send({ reason: 'already-friends' });
   }
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
@@ -47,23 +49,25 @@ router.post('/add/', requireLogin, (req, res) => {
       return res.status(200).send({ success: true });
     }).catch(err => {
       logger.error(`in adding ${userID} to 'pendingRequests' of ${targetID}`, err, {severe: 'data'});
-      return res.status(500).send({ error: true, reason: 'unknown' });
+      return res.status(500).send({ reason: 'unknown' });
     });
   }).catch(err => {
     logger.error(`in adding ${targetID} to 'requested' of ${userID}`, err);
-    return res.status(500).send({ error: true, reason: 'unknown' });
+    return res.status(500).send({ reason: 'unknown' });
   });
 });
   
 /*  /api/user/rescind
     POST
     Username of friend to be rescinded from requested list */
-router.post('/rescind/', requireLogin, (req, res) => {
+router.post('/rescind', requireLogin, (req, res) => {
   const { db, logger } = req.app.locals;
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (!req.user.requested.includes(targetID)) {
-    return res.status(403).send({ error: true, reason: 'no-request-found' });
+    return res.status(403).send({ reason: 'no-request-found' });
+  } else if (req.user.friends.includes(targetID)) {
+    return res.status(403).send({ reason: 'already-friends' });
   }
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
@@ -77,52 +81,96 @@ router.post('/rescind/', requireLogin, (req, res) => {
       return res.status(200).send({ success: true });
     }).catch(err => {
       logger.error(`removing ${userID} from 'pendingRequests' of ${targetID}`, err, {severe: 'data'});
-      return res.status(500).send({ error: true, reason: 'unknown' });
+      return res.status(500).send({ reason: 'unknown' });
     });
   }).catch(err => {
     logger.error(`in removing ${targetID} from 'requested' of ${userID}`, err);
-    return res.status(500).send({ error: true, reason: 'unknown' });
+    return res.status(500).send({ reason: 'unknown' });
   });
 });
 
 /*  /api/user/remove
     POST
     Username of friend to be removed*/
-
+router.post('/remove', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
+  const targetID = req.body.targetID;
+  const userID = req.user._id + '';
+  if (!req.user.friends.includes(targetID)) {
+    return res.status(403).send({ 'reason': 'not-friends' });
+  }
+  db.collection('users').update(
+    { _id: { $in: [ObjectID(userID), ObjectID(targetID)] } }, 
+    { $pullAll: { friends: [ userID, targetID ] } },
+    { multi: true }
+  ).then(response => {
+    logger.info(`${userID} unfriended ${targetID}`);
+    return res.status(200).send({ success: true });
+  }).catch(err => {
+    logger.error(`when ${userID} tried to unfriend ${targetID}`, err);
+    return res.status(500).send({ reason: 'unknown' });
+  });
+});
 
 /*  /api/user/block
     POST
     Username to be blocked */
-// router.post('/block', requireLogin, (req, res) => {
-//   const targetID = req.body.targetID;
-//   const userID = req.user._id + '';
-//   if (!req.user.blocked.includes(targetID)) {
-//     return res.send({ error: true, reason: 'duplicate-request' });
-//   }
-//   const db = req.app.locals.db;
-//   db.collection('users').findOneAndUpdate(
-//     { _id: ObjectID(userID) },
-//     { $pull: { friends: targetID, requested: targetID }, $push: { blocked: targetID } }
-//   ).then(response => {
-//     db.collection('users').findOneAndUpdate(
-//       { _id: ObjectID(targetID) },
-//       { $pull: { pendingRequests: userID } }
-//     ).then(response => {
-//       console.log(`${req.user.email} rescinded friend request to ${req.body.name}(${targetID})`);
-//       res.status(200).send({ success: true });
-//     }).catch(err => {
-//       console.log(`REALLY BAD ERROR INVOLVING DATA THAT NEEDS FIXING`);
-//       console.log(`in removing ${userID} from 'pendingRequests' of ${targetID}: ${err}`);
-//     });
-//   }).catch(err => {
-//     console.log(`ERROR in removing ${targetID} from 'requested' of ${userID}: ${err}`);
-//     res.status(500).send({ error: true, reason: 'unknown' });
-//   });
-// })
+router.post('/block', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
+  const targetID = req.body.targetID;
+  const userID = req.user._id + '';
+  if (req.user.blocked.includes(targetID)) {
+    return res.send({ reason: 'already-blocked' });
+  }
+  db.collection('users').findOneAndUpdate(
+    { _id: ObjectID(userID) },
+    { $pull: { friends: targetID, requested: targetID, pendingRequests: targetID }, $push: { blocked: targetID } }
+  ).then(response => {
+    db.collection('users').findOneAndUpdate(
+      { _id: ObjectID(targetID) },
+      { $pull: { friends: userID, requested: userID, pendingRequests: userID }, $push: { blockedBy: userID } }
+    ).then(response => {
+      logger.info(`${req.user.email}${userID} blocked ${req.body.name}(${targetID})`);
+      return res.status(200).send({ success: true });
+    }).catch(err => {
+      logger.error(`in removing ${userID} from everything of ${targetID} (blocking)`, err, {severe: 'data'});
+      return res.status(500).send({ reason: 'unknown' });
+    });
+  }).catch(err => {
+    logger.error(`in removing ${targetID} from everything of ${userID} (blocking)`, err);
+    return res.status(500).send({ reason: 'unknown' });
+  });
+})
 
 /*  /api/user/unblock
     POST
     Username to be unblocked */
+router.post('/unblock', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
+  const targetID = req.body.targetID;
+  const userID = req.user._id + '';
+  if (!req.user.blocked.includes(targetID)) {
+    return res.send({ reason: 'not-blocked' });
+  }
+  db.collection('users').findOneAndUpdate(
+    { _id: ObjectID(userID) },
+    { $pull: { blocked: targetID } }
+  ).then(response => {
+    db.collection('users').findOneAndUpdate(
+      { _id: ObjectID(targetID) },
+      { $pull: { blockedBy: userID } }
+    ).then(response => {
+      logger.info(`${req.user.email}${userID} unblocked ${req.body.name}(${targetID})`);
+      return res.status(200).send({ success: true });
+    }).catch(err => {
+      logger.error(`in removing ${userID} from 'blockedBy' of ${targetID} (unblocking)`, err, {severe: 'data'});
+      return res.status(500).send({ reason: 'unknown' });
+    });
+  }).catch(err => {
+    logger.error(`in removing ${targetID} from 'blocked' of ${userID} (unblocking)`, err);
+    return res.status(500).send({ reason: 'unknown' });
+  });
+})
 
 /*  /api/user/pending-requests
     GET
@@ -134,7 +182,7 @@ router.get('/pending-requests', requireLogin, (req, res) => {
   db.collection('users').find({ _id: { $in: reqsArray }}, projection).toArray((err, docs) => {
     if (err) {
       logger.error(`in getting pending requests for ${req.user._id}`, err);
-      return res.status(500).send({ error: true, reason: 'unknown' });
+      return res.status(500).send({ reason: 'unknown' });
     }
     res.send(docs);
   });
@@ -148,7 +196,7 @@ router.post('/accept-friend', requireLogin, (req, res) => {
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (!req.user.pendingRequests.includes(targetID)){
-    return res.status(403).send({ error: true, reason: 'no-request-found' });
+    return res.status(403).send({ reason: 'no-request-found' });
   }
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
@@ -162,11 +210,11 @@ router.post('/accept-friend', requireLogin, (req, res) => {
       res.send({ success: true });
     }).catch(err => {
       logger.error(`in moving ${userID} from 'pendingRequests' to 'friends' of ${targetID}`, err, {severe: 'data'});
-      return res.status(500).send({ error: true, reason: 'unknown' });
+      return res.status(500).send({ reason: 'unknown' });
     });
   }).catch(err => {
     logger.error(`in moving ${targetID} from 'requested' to 'friends' of ${userID}`, err);
-    return res.status(500).send({ error: true, reason: 'unknown' });
+    return res.status(500).send({ reason: 'unknown' });
   });
 });
 
@@ -178,7 +226,7 @@ router.post('/decline-friend', requireLogin, (req, res) => {
   const targetID = req.body.targetID;
   const userID = req.user._id + '';
   if (!req.user.pendingRequests.includes(targetID)){
-    return res.status(403).send({ error: true, reason: 'no-request-found' });
+    return res.status(403).send({ reason: 'no-request-found' });
   }
   db.collection('users').findOneAndUpdate(
     { _id: ObjectID(userID) },
@@ -192,17 +240,12 @@ router.post('/decline-friend', requireLogin, (req, res) => {
       res.send({ success: true });
     }).catch(err => {
       logger.error(`in removing ${userID} from 'requested' of ${targetID}`, err, {severe: 'data'});
-      return res.status(500).send({ error: true, reason: 'unknown' });
+      return res.status(500).send({ reason: 'unknown' });
     });
   }).catch(err => {
     logger.error(`in removing ${targetID} from 'pendingRequests' of ${userID}`, err);
-    return res.status(500).send({ error: true, reason: 'unknown' });
+    return res.status(500).send({ reason: 'unknown' });
   });
 });
-
-
-/*  /api/user/ping-info
-    POST
-    ID of info to be pinged */
 
 module.exports = router;

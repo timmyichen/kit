@@ -8,6 +8,8 @@ import ConfirmActionModal from './ConfirmActionModal';
 import AlertMessage from './AlertMessage';
 import MyInfoNew from './MyInfoNew';
 
+import translateAPIerrors from '../utils/translateAPIerrors';
+
 class MyInfoCard extends Component {
   constructor(props) {
     super(props);
@@ -53,12 +55,18 @@ class MyInfoCard extends Component {
       .then(response => {
         if (response.data.success) {
           setMessage({
-            content: `Success: deleted '${info.label}'`,
+            content: `Successfully deleted '${info.label}'`,
             positive: true,
             duration: 4500
           })
           updateInfo();
         }
+      }).catch(err => {
+        setMessage({
+          content: `Error: ${translateAPIerrors(err.response.data.reason)}`,
+          negative: true,
+          duration: 4500
+        });
       });
   }
   render() {

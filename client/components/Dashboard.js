@@ -3,6 +3,7 @@ import { Header, Container } from 'semantic-ui-react';
 import propTypes from 'prop-types';
 
 import PendingFriendRequests from './PendingFriendRequests';
+import MessageHeader from './MessageHeader';
 
 import { setMessage } from '../utils/messages';
 
@@ -20,7 +21,7 @@ class Dashboard extends Component {
     const { message } = this.state;
     return (
       <Container>
-        <div className="alert-container">{message}</div>
+        <MessageHeader message={message} />
         <Header as="h1">Dashboard</Header>
         <PendingFriendRequests
           user={user}
