@@ -3,7 +3,7 @@ import { Header, Container, Card } from 'semantic-ui-react';
 import propTypes from 'prop-types';
 
 import FriendRequest from './FriendRequest';
-import getPendingRequests from '../actions/getPendingRequests';
+import { getDataFrom } from '../actions/getDataFrom';
 
 class PendingFriendRequests extends Component {
   constructor(props) {
@@ -13,7 +13,7 @@ class PendingFriendRequests extends Component {
       refreshReqsIntervalID: null,
       message: null,
       messageTimeoutID: null,
-    }
+    };
     
     this.refreshRequests = this.refreshRequests.bind(this);
   }
@@ -21,7 +21,7 @@ class PendingFriendRequests extends Component {
     this.refreshRequests();
   }
   refreshRequests() {
-    getPendingRequests()
+    getDataFrom('/api/user/pending-requests')
       .then(response => {
         const pendingRequests = Array.isArray(response) && response.length === 0 ? null : response;
         this.setState({ pendingRequests });
@@ -56,6 +56,6 @@ class PendingFriendRequests extends Component {
 PendingFriendRequests.propTypes = {
   user: propTypes.object,
   refreshUser: propTypes.func.isRequired,
-}
+};
 
 export default PendingFriendRequests;

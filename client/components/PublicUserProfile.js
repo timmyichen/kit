@@ -3,8 +3,7 @@ import { Container, Header, Button } from 'semantic-ui-react';
 import propTypes from 'prop-types';
 import axios from 'axios';
 
-import getProfile from '../actions/getProfile';
-import getUser from '../actions/getUser';
+import { getDataFrom } from '../actions/getDataFrom';
 import MessageHeader from './MessageHeader';
 import ConfirmActionModal from './ConfirmActionModal';
 
@@ -40,8 +39,8 @@ class PublicUserProfile extends Component {
   }
   fetchData() {
     const { username } = this.props.routerInfo.match.params;
-    getProfile(username).then(profile => {
-      getUser().then(user => {
+    getDataFrom(`/api/user/profile/${username}`).then(profile => {
+      getDataFrom('/api/current-user').then(user => {
         this.setState({
           profile,
           loading: false,

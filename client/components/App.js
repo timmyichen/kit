@@ -9,7 +9,7 @@ import PublicUserProfile from './PublicUserProfile';
 import Dashboard from './Dashboard';
 import FriendsPage from './FriendsPage';
 
-import getUser from '../actions/getUser';
+import { getDataFrom } from '../actions/getDataFrom';
 
 const authMethods = ['google', 'facebook', 'linkedin'];
 
@@ -27,7 +27,7 @@ class App extends Component {
     this.refreshUser();
   }
   refreshUser() {
-    getUser()
+    getDataFrom('/api/current-user')
       .then(data => {
         this.setState({ user: data });
       });

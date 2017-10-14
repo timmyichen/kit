@@ -4,7 +4,7 @@ import propTypes from 'prop-types';
 import axios from 'axios';
 import { Redirect } from 'react-router-dom';
 
-import getUser from '../actions/getUser';
+import { getDataFrom } from '../actions/getDataFrom';
 import { checkUsername } from '../utils/formValidation';
 import { validateWelcomeForm } from '../utils/welcomeValidation';
 import MessageHeader from './MessageHeader';
@@ -55,7 +55,7 @@ class Welcome extends Component {
   }
   
   componentDidMount() {
-    getUser()
+    getDataFrom('/api/current-user')
       .then(data => {
         this.setState({
           form: {

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Header, Container, Card } from 'semantic-ui-react';
 import propTypes from 'prop-types';
 
-import getMyInfos from '../actions/getMyInfos';
+import { getDataFrom } from '../actions/getDataFrom';
 import MyInfoNew from './MyInfoNew';
 import MyInfoCard from './MyInfoCard';
 import MessageHeader from './MessageHeader';
@@ -24,7 +24,7 @@ class MyInfo extends Component {
     this.updateInfo();
   }
   updateInfo() {
-    getMyInfos().then(msg => this.setState({ myInfos: msg }));
+    getDataFrom('/api/my-info').then(msg => this.setState({ myInfos: msg }));
   }
   render() {
     const { myInfos, message } = this.state;
