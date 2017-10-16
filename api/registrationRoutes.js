@@ -1,9 +1,3 @@
-/*
-/api/check-username
-GET
-Returns true or false if the username has been taken or not
-*/
-
 const router = require('express').Router();
 const ObjectID = require('mongodb').ObjectID;
 
@@ -11,6 +5,9 @@ const requireLogin = require('../middlewares/requireLogin');
 const finishedSetup = require('../middlewares/finishedSetup');
 const utils = require('../server-utils/validation');
 
+/*  /api/check-username
+    GET
+    Returns true or false if the username has been taken or not */
 router.get('/check-username/', requireLogin, (req, res) => {
   const { db, logger } = req.app.locals;
   const username = req.query.username;

@@ -9,17 +9,17 @@ class Navbar extends Component {
   userLoggedIn() {
     return (
       <Menu.Menu position="right">
-        <Menu.Item>
-          <Link to="/my-info">My Info</Link>
+        <Menu.Item as={Link} to="/my-info">
+          My Info
         </Menu.Item>
-        <Menu.Item>
-          <Link to="/dashboard">Dashboard</Link>
+        <Menu.Item as={Link} to="/dashboard">
+          Dashboard
         </Menu.Item>
-        <Menu.Item as="a">
+        <Menu.Item as={Link} to="/contact-infos">
           Address Book
         </Menu.Item>
-        <Menu.Item>
-          <Link to="/my-friends">Friends</Link>
+        <Menu.Item as={Link} to="/my-friends">
+          Friends
         </Menu.Item>
         <Menu.Item as="a">
           Account

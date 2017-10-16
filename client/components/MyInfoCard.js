@@ -5,8 +5,8 @@ import axios from 'axios';
 import moment from 'moment';
 
 import ConfirmActionModal from './ConfirmActionModal';
-import AlertMessage from './AlertMessage';
 import MyInfoNew from './MyInfoNew';
+import CardSharingModal from './CardSharingModal';
 
 import translateAPIerrors from '../utils/translateAPIerrors';
 
@@ -33,7 +33,7 @@ class MyInfoCard extends Component {
       const { countryCode, number } = data;
       return (
         <div>
-          {countryCode ? `Country Code: ${countryCode}` : ''}<br/>
+          {countryCode ? <span>Country Code: {countryCode}<br/></span> : ''}
           Number: {number}
         </div>
       );
@@ -58,7 +58,7 @@ class MyInfoCard extends Component {
             content: `Successfully deleted '${info.label}'`,
             positive: true,
             duration: 4500
-          })
+          });
           updateInfo();
         }
       }).catch(err => {
@@ -70,7 +70,7 @@ class MyInfoCard extends Component {
       });
   }
   render() {
-    const { label, type, primary, lastUpdated, data, notes, _id } = this.props.info;
+    const { label, type, primary, lastUpdated, data, notes, _id, sharedWith } = this.props.info;
     const { updateInfo, user, info, setMessage } = this.props;
     const date = moment(lastUpdated).format("YYYY-MM-DD");
     return (
@@ -99,6 +99,15 @@ class MyInfoCard extends Component {
           </Card.Description>
         </Card.Content>
         { notes ? <Card.Content extra>{notes}</Card.Content> : '' }
+        <Card.Content>
+          Shared with {sharedWith.length} people.<br/>
+          <CardSharingModal
+            user={user}
+            info={info}
+            setMessage={setMessage}
+            updateInfo={updateInfo}
+          />
+        </Card.Content>
         <Card.Content extra>
           <span>Last updated on {date}</span>
         </Card.Content>

@@ -39,7 +39,7 @@ class MyInfo extends Component {
           setMessage={this.setMessage}
         />
         <Container>
-          <Card.Group itemsPerRow={3}>
+          <Card.Group itemsPerRow={2}>
             {myInfos.map((info, i) => (
               <MyInfoCard
                 info={info}

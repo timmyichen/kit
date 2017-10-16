@@ -5,6 +5,11 @@ body .required-star {
   color: #db2828;
   margin: -0.2em 0 0 0.2em;
 }
+body .split-half {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: baseline;
+}
 #navbar {
   background: transparent;
   color: #302f7f;

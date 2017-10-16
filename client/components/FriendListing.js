@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Card, Icon } from 'semantic-ui-react';
+import { Link } from 'react-router-dom';
 import propTypes from 'prop-types';
+import moment from 'moment';
 
 class FriendListing extends Component {
   constructor(props) {
@@ -8,15 +10,17 @@ class FriendListing extends Component {
   }
   render() {
     const { firstName, lastName, username, birthday, lastLogin } = this.props.info;
+    const lastLoginMoment = moment(lastLogin);
+    const birthdayMoment = moment(birthday.substring(4));
     return (
       <Card fluid color="blue">
         <Card.Content>
-          <Card.Header>{`${firstName} ${lastName}`}</Card.Header>
-          <Card.Meta>{username}</Card.Meta>
+          <Card.Header><Link to={`/profile/${username}`}>{`${firstName} ${lastName}`}</Link></Card.Header>
+          <Card.Meta>{username} last logged in on {lastLoginMoment.format("MMM Do, YYYY")}</Card.Meta>
           {firstName} has shared the following info with you:
         </Card.Content>
         <Card.Content extra>
-          Birthday: {birthday}
+          Birthday: {moment(birthday).format("MMM Do")}
         </Card.Content>
       </Card>
     );

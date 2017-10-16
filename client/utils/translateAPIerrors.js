@@ -14,6 +14,8 @@ function translateAPIerrors(msg) {
       return 'User is already blocked';
     case 'not-blocked':
       return 'User is not blocked';
+    case 'not-owner':
+      return 'You are not the owner of that data';
     default:
       return 'Unknown error.';
   }

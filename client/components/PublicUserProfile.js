@@ -127,7 +127,7 @@ class PublicUserProfile extends Component {
         <Button primary
           disabled={user.username === username || processingFriendRequest || isBlocked}
           content={isFriends ? 'Remove Friend' : '' || friendRequestSent ? 'Cancel Friend Request' : 'Add Friend'}
-          icon="add user"
+          icon={isFriends || friendRequestSent ? 'remove user' : 'add user'}
           labelPosition="right"
           onClick={this.handlePrimaryClick}
         />
