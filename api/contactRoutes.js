@@ -119,22 +119,19 @@ router.post('/my-info/delete', (req, res) => {
   const { db, logger } = req.app.locals;
   const id = ObjectID(req.body.id);
   const owner = req.user._id + '';
-  db.collection('contactinfos').remove({ _id: id , owner: owner })
-    .then(response => {
-      db.collection('users').findOneAndUpdate(
-        { _id: ObjectID(owner) },
-        { $pull: { owns: id + '' } }
-      ).then(response => {
-        logger.info(`User ${req.user.email} deleted contact info of type ${req.body.type} called '${req.body.label}'`);
-        return res.status(200).send({ success: true });
-      }).catch(err => {
-        logger.error(`in removing contactinfo ${id} from 'owns' of ${owner}`, err, {severe: 'data'});
-        return res.status(400).send({ reason: 'unknown error in deletion' });
-      });
+  const removeContactInfo = db.collection('contactinfos').remove({ _id: id , owner: owner });
+  const removeFromUser = db.collection('users').findOneAndUpdate(
+    { _id: ObjectID(owner) },
+    { $pull: { owns: id + '' } }
+  );
+  Promise.all([removeContactInfo, removeFromUser])
+    .then(values => {
+      logger.info(`User ${owner} deleted contact info of type ${req.body.type} called '${req.body.label}' with id ${id}`);
+      return res.send({ success: true });
     })
     .catch(err => {
-      logger.error(`in deleting contact info by ${req.user.email} on CI with ID ${req.body.id}`, err);
-      return res.status(400).send({ reason: 'unknown error in deletion' });
+      logger.error(`in removing contactinfo ${id} from ${owner}`, err, {severe: 'data'});
+      return res.status(400).send({ reason: 'unknown' });
     });
 });
 

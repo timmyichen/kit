@@ -24,34 +24,28 @@ router.post('/by-contact', requireLogin, (req, res) => {
   sharedWith = array.uniq(sharedWith);
   notSharedWith = array.uniq(notSharedWith);
   
-  db.collection('contactinfos').findOneAndUpdate(
-    { _id: ObjectID(contactID) },
-    { $set: { sharedWith } }
-  ).then(response => {
-    db.collection('users').update(
+  const setSharedWith = db.collection('contactinfos').findOneAndUpdate(
+      { _id: ObjectID(contactID) },
+      { $set: { sharedWith } }
+    );
+  const addAccess = db.collection('users').update(
       { _id: { $in: sharedWith.map(id => ObjectID(id)) } },
       { $addToSet: { hasAccessTo: contactID } },
       { multi: true }
-    ).then(response => {
-      db.collection('users').update(
-        { _id: { $in: notSharedWith.map(id => ObjectID(id)) } },
-        { $pull: { hasAccessTo: contactID } },
-        { multi: true }
-      ).then(response => {
-        logger.info(`${_id} updated sharing permissions for contact ${contactID}`);
-        return res.send({ success: true });
-      }).catch(err => {
-        logger.error(`in updating sharing permissions for ${contactID} by user ${_id}`, err, {severe: 'data'});
-        return res.status(400).send({ reason: 'unknown' });
-      });
+    );
+  const removeAccess = db.collection('users').update(
+      { _id: { $in: notSharedWith.map(id => ObjectID(id)) } },
+      { $pull: { hasAccessTo: contactID } },
+      { multi: true }
+    );
+  Promise.all([setSharedWith, addAccess, removeAccess])
+    .then(values => {
+      logger.info(`${_id} updated sharing permissions for contact ${contactID}`);
+      return res.send({ success: true });
     }).catch(err => {
       logger.error(`in updating sharing permissions for ${contactID} by user ${_id}`, err, {severe: 'data'});
       return res.status(400).send({ reason: 'unknown' });
     });
-  }).catch(err => {
-    logger.error(`in updating sharing permissions for ${contactID} by user ${_id}`, err);
-    return res.status(400).send({ reason: 'unknown' });
-  });
 });
 
 /*  /share/by-user
