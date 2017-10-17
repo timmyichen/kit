@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import { Header, Container } from 'semantic-ui-react';
+import { Header, Container, Divider } from 'semantic-ui-react';
 import propTypes from 'prop-types';
 
 import PendingFriendRequests from './PendingFriendRequests';
+import UpcomingBirthdays from './UpcomingBirthdays';
 import MessageHeader from './MessageHeader';
 
 import { setMessage } from '../utils/messages';
@@ -27,6 +28,10 @@ class Dashboard extends Component {
           user={user}
           refreshUser={refreshUser}
           setMessage={this.setMessage}
+        />
+        <Divider />
+        <UpcomingBirthdays
+          user={user}
         />
       </Container>
     );
