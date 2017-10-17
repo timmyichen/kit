@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const ObjectID = require('mongodb').ObjectID;
+const array = require('lodash/array');
 
 const requireLogin = require('../middlewares/requireLogin');
 const { validateContactInfoForm, containsErrors } = require('../client/utils/contactInfoValidation');
@@ -7,6 +8,32 @@ const { validateContactInfoForm, containsErrors } = require('../client/utils/con
 /*  /api/contacts
     GET
     Array of all contact info shared with user */
+router.get('/contacts', requireLogin, (req, res) => {
+  const { db, logger } = req.app.locals;
+  const hasAccessTo = req.user.hasAccessTo.map(id => ObjectID(id));
+  db.collection('contactinfos').find(
+    { _id: { $in: hasAccessTo }},
+    { sharedWith: 0 }
+  ).toArray((err, docs) => {
+    if (err) {
+      logger.error(`at getting contactinfos for /api/contacts for user  ${req.user._id}`, err);
+      res.status(500).send({ reason: 'unknown' });
+    }
+    let userIDs = docs.reduce((arr, info) => {arr.push(info.owner + ''); return arr;}, []);
+    userIDs = array.uniq(userIDs).map(id => ObjectID(id));
+    db.collection('users').find(
+      { _id: { $in: userIDs } },
+      { firstName: 1, lastName: 1, username: 1 }
+    ).toArray((err, users) => {
+      if (err) {
+        logger.error(`at getting users for /api/contacts for user  ${req.user._id}`, err);
+        res.status(500).send({ reason: 'unknown' });
+      }
+      const usersObj = users.reduce((obj, user) => {obj[user._id + ''] = user; return obj;}, {});
+      res.send({ infos: docs, users: usersObj });
+    });
+  });
+});
 
 /*  /api/my-info/
     GET
@@ -17,7 +44,7 @@ router.get('/my-info/', requireLogin, (req, res) => {
   db.collection('contactinfos').find({ _id: { $in: ownedByUser }}).toArray((err, docs) => {
     if (err) {
       logger.error(`at /api/my-info/ for user ${req.user.email}`, err);
-      res.send({ reason: 'unknown' });
+      res.status(500).send({ reason: 'unknown' });
     }
     res.send(docs);
   });
@@ -110,17 +137,6 @@ router.post('/my-info/delete', (req, res) => {
       return res.status(400).send({ reason: 'unknown error in deletion' });
     });
 });
-
-/*
-/api/my-info/share
-POST
-ID of info to be shared, username of friend shared to
-
-/api/my-info/unshare
-POST
-ID of info to be unshared, username of friend shared to
-
-*/
 
 
 

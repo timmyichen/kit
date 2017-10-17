@@ -11,7 +11,7 @@ class FriendListing extends Component {
   render() {
     const { firstName, lastName, username, birthday, lastLogin } = this.props.info;
     const lastLoginMoment = moment(lastLogin);
-    const birthdayMoment = moment(birthday.substring(4));
+    const birthdayMoment = moment("2001-"+birthday.substring(5));
     return (
       <Card fluid color="blue">
         <Card.Content>

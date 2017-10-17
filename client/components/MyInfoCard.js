@@ -15,7 +15,6 @@ class MyInfoCard extends Component {
     super(props);
     
     this.createCardDescription = this.createCardDescription.bind(this);
-    this.handleEdit = this.handleEdit.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
   }
   createCardDescription(type, data) {
@@ -45,9 +44,6 @@ class MyInfoCard extends Component {
         </div>
       );
     }
-  }
-  handleEdit() {
-    
   }
   handleDelete() {
     const { info, updateInfo, setMessage } = this.props;

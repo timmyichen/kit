@@ -8,6 +8,7 @@ import MyInfo from './MyInfo';
 import PublicUserProfile from './PublicUserProfile';
 import Dashboard from './Dashboard';
 import FriendsPage from './FriendsPage';
+import AddressBook from './AddressBook'
 
 import { getDataFrom } from '../actions/getDataFrom';
 
@@ -59,6 +60,14 @@ class App extends Component {
           <Route exact path="/my-info"
             render={() => 
               <MyInfo user={user} />
+            }
+          />
+          <Route exact path="/contact-infos"
+            render={() =>
+              <AddressBook
+                user={user}
+                refreshUser={this.refreshUser}
+              />
             }
           />
           <Route exact path="/my-friends"
