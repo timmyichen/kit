@@ -1,18 +1,34 @@
 const moment = require('moment');
 
 //accepts date in form YYYY-MM-DD and and determines the next occurrence
-function getNextDateDifference(nextDate, targetDate) {
-  const currentDateUnix = moment(moment().format("MM-DD"));
-  const targetDateUnix = moment(targetDate.substring(4));
-  const currentYear = moment().format("YYYY");
+function getNextDate(targetDate) {
+  const target = new Date(targetDate);
+  const now = new Date();
+  const targetMonth = target.getMonth();
+  const targetDay = target.getDate();
+  const nowMonth = now.getMonth();
+  const nowDate = now.getDate();
+  let year = now.getFullYear();
   
-  if (currentDateUnix.unix() > targetDateUnix.unix()) { //if today is past the target date
-    return `${currentYear + 1}-${currentDateUnix}`;
-  } else {
-    return `${currentYear}-${currentDateUnix}`;
+  if (targetMonth < nowMonth || (targetMonth === nowMonth && targetDate < nowDate)) {
+    year = now.getFullYear() + 1;
   }
+  
+  const nextDate = moment(`${year}-${targetMonth+1}-${targetDay}`, "YYYY-MM-DD").unix()*1000;
+  return nextDate;
+}
+
+function getDateDifference(targetDate, formatted=false) {
+  const diff = {};
+  const target = new Date(targetDate);
+  const now = new Date();
+  diff.years = target.getFullYear() - now.getFullYear();
+  diff.months = target.getMonth() - now.getMonth() + diff.years * 12;
+  diff.days = Math.ceil((target.getTime() - now.getTime()) / (1000 * 3600 * 24));
+  return diff;
 }
 
 module.exports = {
-  getNextDateDifference,
+  getNextDate,
+  getDateDifference,
 };

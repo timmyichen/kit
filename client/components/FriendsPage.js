@@ -12,7 +12,7 @@ class FriendsPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      friends: [],
+      friends: {},
       message: null,
     };
     
@@ -23,10 +23,20 @@ class FriendsPage extends Component {
     this.loadDataToState();
   }
   loadDataToState() {
-    getDataFrom('/api/user/friends-list')
-      .then(response => {
-        this.setState({ friends: response });
-      });
+    const getFriendsList = getDataFrom('/api/user/friends-list');
+    const getContacts = getDataFrom('/api/contacts');
+    Promise.all([getFriendsList, getContacts])
+      .then(values => {
+        const friends = values[0].reduce((obj, friend) => {
+          obj[friend._id] = friend;
+          obj[friend._id].infos = [];
+          return obj;
+        }, {});
+        values[1].infos.map(info => {
+          friends[info.owner].infos.push(info);
+        })
+        this.setState({ friends });
+      })
   }
   render() {
     const { message, friends } = this.state;
@@ -34,7 +44,7 @@ class FriendsPage extends Component {
       <Container>
         <MessageHeader message={message} />
         <Header as="h1">My Friends</Header>
-        {friends.map(friend => <FriendListing key={`friend-${friend.username}`} info={friend} />)}
+        {Object.values(friends).map(friend => <FriendListing key={`friend-${friend.username}`} info={friend} />)}
       </Container>
     )
   }

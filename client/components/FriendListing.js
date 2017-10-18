@@ -4,23 +4,40 @@ import { Link } from 'react-router-dom';
 import propTypes from 'prop-types';
 import moment from 'moment';
 
+import { getNextDate, getDateDifference } from '../utils/dates';
+import { pluralize } from '../utils/strings';
+
+window.moment = moment;
+
 class FriendListing extends Component {
   constructor(props) {
     super(props);
   }
+  getDifferenceString(diff) {
+    if (diff.days === 0) {
+      return 'That\'s today!';
+    } else if (diff.days > 31) {
+      return `${pluralize(diff.months, 'month')} away`;
+    } else {
+      return `${pluralize(diff.days, 'day')} away`;
+    }
+  }
   render() {
-    const { firstName, lastName, username, birthday, lastLogin } = this.props.info;
-    const lastLoginMoment = moment(lastLogin);
-    const birthdayMoment = moment("2001-"+birthday.substring(5));
+    const { firstName, lastName, username, birthday, lastActive, infos } = this.props.info;
+    const lastActiveMoment = moment(lastActive);
+    const nextBirthday = getNextDate(birthday);
+    const bdayDiff = getDateDifference(nextBirthday);
     return (
       <Card fluid color="blue">
         <Card.Content>
           <Card.Header><Link to={`/profile/${username}`}>{`${firstName} ${lastName}`}</Link></Card.Header>
-          <Card.Meta>{username} last logged in on {lastLoginMoment.format("MMM Do, YYYY")}</Card.Meta>
-          {firstName} has shared the following info with you:
+          <Card.Meta>{username} last logged in on {lastActiveMoment.format("MMM Do, YYYY")}</Card.Meta>
+          {infos.length === 0 ? `${firstName} has not shared any info with you yet.` :
+            `${firstName} has shared ${infos.length} pieces of contact information with you:`
+          }
         </Card.Content>
         <Card.Content extra>
-          Birthday: {moment(birthday).format("MMM Do")}
+          Upcoming Birthday: {moment(nextBirthday).format("MMM Do YYYY")} ({this.getDifferenceString(bdayDiff)})
         </Card.Content>
       </Card>
     );
