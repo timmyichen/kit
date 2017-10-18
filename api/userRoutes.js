@@ -30,7 +30,7 @@ router.get('/friends-list', requireLogin, (req, res) => {
   const friendsList = req.user.friends.map(friend => ObjectID(friend));
   db.collection('users').find(
     { _id: { $in: friendsList }},
-    { _id: 1, firstName: 1, lastName: 1, lastLogin: 1, username: 1, birthday: 1 }
+    { _id: 1, firstName: 1, lastName: 1, lastActive: 1, username: 1, birthday: 1 }
   ).toArray((err, docs) => {
     if (err) {
       logger.error(`in fetching friends list for ${req.user._id + ''}`, err);
@@ -115,17 +115,32 @@ router.post('/remove', requireLogin, (req, res) => {
   if (!req.user.friends.includes(targetID)) {
     return res.status(403).send({ 'reason': 'not-friends' });
   }
-  db.collection('users').update(
-    { _id: { $in: [ObjectID(userID), ObjectID(targetID)] } }, 
-    { $pullAll: { friends: [ userID, targetID ] } },
-    { multi: true }
-  ).then(response => {
-    logger.info(`${userID} unfriended ${targetID}`);
-    return res.status(200).send({ success: true });
-  }).catch(err => {
-    logger.error(`when ${userID} tried to unfriend ${targetID}`, err);
-    return res.status(500).send({ reason: 'unknown' });
+  db.collection('contactinfos').find({ owner: { $in: [userID, targetID] } }).toArray((err, docs) => {
+    if (err) {
+      logger.error(`in removing ${userID} from everything of ${targetID} (blocking)`, err);
+      return res.status(500).send({ reason: 'unknown' });
+    }
+    const infoIDs = docs.map(doc => doc._id + '');
+    const updateUsers = db.collection('users').update(
+      { _id: { $in: [ObjectID(userID), ObjectID(targetID)] } }, 
+      { $pullAll: { friends: [ userID, targetID ], hasAccessTo: infoIDs } },
+      { multi: true }
+    );
+    const updateContacts = db.collection('contactinfos').update(
+      { owner: { $in: [userID, targetID] } },
+      { $pullAll: { sharedWith: [userID, targetID] } },
+      { multi: true }
+    );
+    Promise.all([updateUsers, updateContacts])
+      .then(response => {
+        logger.info(`${userID} unfriended ${targetID}`);
+        return res.status(200).send({ success: true });
+      }).catch(err => {
+        logger.error(`when ${userID} tried to unfriend ${targetID}`, err);
+        return res.status(500).send({ reason: 'unknown' });
+      });  
   });
+  
 });
 
 /*  /api/user/block
@@ -138,23 +153,41 @@ router.post('/block', requireLogin, (req, res) => {
   if (req.user.blocked.includes(targetID)) {
     return res.send({ reason: 'already-blocked' });
   }
-  const updatedUser = db.collection('users').findOneAndUpdate(
-    { _id: ObjectID(userID) },
-    { $pull: { friends: targetID, requested: targetID, pendingRequests: targetID }, $push: { blocked: targetID } }
-  );
-  const updatedTarget = db.collection('users').findOneAndUpdate(
-    { _id: ObjectID(targetID) },
-    { $pull: { friends: userID, requested: userID, pendingRequests: userID }, $push: { blockedBy: userID } }
-  );
-  Promise.all([updatedUser, updatedTarget])
-    .then(values => {
-      logger.info(`${userID} blocked ${targetID}`);
-      return res.send({ success: true });
-    })
-    .catch(err => {
-      logger.error(`in removing ${userID} from everything of ${targetID} (blocking)`, err, {severe: 'data'});
+  db.collection('contactinfos').find({ owner: { $in: [userID, targetID] } }).toArray((err, docs) => {
+    if (err) {
+      logger.error(`in removing ${userID} from everything of ${targetID} (blocking)`, err);
       return res.status(500).send({ reason: 'unknown' });
-    });
+    }
+    const infoIDs = docs.map(doc => doc._id + '');
+    const updatedUser = db.collection('users').findOneAndUpdate(
+      { _id: ObjectID(userID) },
+      { $pull: { friends: targetID, requested: targetID, pendingRequests: targetID },
+        $push: { blocked: targetID } ,
+        $pullAll: { hasAccessTo: infoIDs }
+      }
+    );
+    const updatedTarget = db.collection('users').findOneAndUpdate(
+      { _id: ObjectID(targetID) },
+      { $pull: { friends: userID, requested: userID, pendingRequests: userID },
+        $push: { blockedBy: userID },
+        $pullAll: { hasAccessTo: infoIDs }
+      }
+    );
+    const updateContacts = db.collection('contactinfos').update(
+      { owner: { $in: [userID, targetID] } },
+      { $pullAll: { sharedWith: [userID, targetID] } },
+      { multi: true }
+    ); //need to update users hasAccessTo doc as well
+    Promise.all([updatedUser, updatedTarget, updateContacts])
+      .then(values => {
+        logger.info(`${userID} blocked ${targetID}`);
+        return res.send({ success: true });
+      })
+      .catch(err => {
+        logger.error(`in removing ${userID} from everything of ${targetID} (blocking)`, err, {severe: 'data'});
+        return res.status(500).send({ reason: 'unknown' });
+      });
+  });
 })
 
 /*  /api/user/unblock
