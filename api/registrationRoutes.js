@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const ObjectID = require('mongodb').ObjectID;
+const moment = require('moment');
 
 const requireLogin = require('../middlewares/requireLogin');
 const finishedSetup = require('../middlewares/finishedSetup');
@@ -40,7 +41,7 @@ router.post('/new', requireLogin, finishedSetup, (req, res) => {
         firstName: data.firstName,
         lastName: data.lastName,
         username: data.username,
-        birthday: data.birthday,
+        birthday: moment(data.birthday).unix() * 1000,
         gender: data.gender,
       }}
     )

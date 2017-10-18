@@ -12,6 +12,7 @@ require('winston-mongodb');
 
 const apiRoutes = require('./api/index');
 const requireSetup = require('./middlewares/requireSetup');
+const recordActivity = require('./middlewares/recordActivity');
 
 const app = express();
 
@@ -60,7 +61,7 @@ const startServer = () => {
     app.set('view engine', 'njk');
     app.set('views', __dirname + '/views');
     
-    app.get('*', (req, res) => {
+    app.get('*', recordActivity, (req, res) => {
       res.render('pages/index', {
         appname: config.APPNAME
       });

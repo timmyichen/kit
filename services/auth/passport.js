@@ -43,7 +43,7 @@ module.exports = app => {
                 firstName: profile.name.givenName,
                 lastName: profile.name.familyName,
                 gender: profile.gender,
-                lastLogin: Date.now(),
+                lastActive: Date.now(),
                 joined: Date.now(),
                 username: null,
                 birthday: null,
