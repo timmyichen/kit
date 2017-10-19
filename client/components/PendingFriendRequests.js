@@ -35,7 +35,7 @@ class PendingFriendRequests extends Component {
         <div className="alert-container">{message}</div>
         <Header as="h2">Pending Friend Requests</Header>
         {pendingRequests ? 
-          <Card.Group itemsPerRow={4}>
+          <Card.Group itemsPerRow={2}>
             {pendingRequests.map((req, i) => 
               <FriendRequest
                 key={`friendreq-${i}`}

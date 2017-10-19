@@ -10,6 +10,9 @@ body .split-half {
   justify-content: space-between;
   align-items: baseline;
 }
+body .tabbed {
+  padding-left: 10px;
+}
 #navbar {
   background: transparent;
   color: #302f7f;

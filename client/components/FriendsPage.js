@@ -13,6 +13,7 @@ class FriendsPage extends Component {
     super(props);
     this.state = {
       friends: {},
+      allInfos: [],
       message: null,
     };
     
@@ -24,29 +25,39 @@ class FriendsPage extends Component {
   }
   loadDataToState() {
     const getFriendsList = getDataFrom('/api/user/friends-list');
-    const getContacts = getDataFrom('/api/contacts');
-    Promise.all([getFriendsList, getContacts])
+    const getMyInfo = getDataFrom('/api/my-info');
+    Promise.all([getFriendsList, getMyInfo])
       .then(values => {
         const friends = values[0].reduce((obj, friend) => {
           obj[friend._id] = friend;
-          obj[friend._id].infos = [];
+          obj[friend._id].infosShared = [];
           return obj;
         }, {});
-        values[1].infos.map(info => {
-          friends[info.owner].infos.push(info);
-        })
-        this.setState({ friends });
-      })
+        values[1].map(info => {
+          info.sharedWith.forEach(user => {
+            friends[user].infosShared.push(info);
+          });
+        });
+        this.setState({ friends, allInfos: values[1] });
+      });
   }
   render() {
-    const { message, friends } = this.state;
+    const { message, friends, allInfos } = this.state;
     return (
       <Container>
         <MessageHeader message={message} />
         <Header as="h1">My Friends</Header>
-        {Object.values(friends).map(friend => <FriendListing key={`friend-${friend.username}`} info={friend} />)}
+        {Object.values(friends).map(friend => 
+          <FriendListing
+            key={`friend-${friend.username}`}
+            info={friend}
+            allInfos={allInfos}
+            setMessage={this.setMessage}
+            refreshData={this.loadDataToState}
+          />
+        )}
       </Container>
-    )
+    );
   }
 }
 

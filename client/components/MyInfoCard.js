@@ -6,7 +6,7 @@ import moment from 'moment';
 
 import ConfirmActionModal from './ConfirmActionModal';
 import MyInfoNew from './MyInfoNew';
-import CardSharingModal from './CardSharingModal';
+import ContactSharingModal from './ContactSharingModal';
 
 import translateAPIerrors from '../utils/translateAPIerrors';
 
@@ -97,7 +97,7 @@ class MyInfoCard extends Component {
         { notes ? <Card.Content extra>{notes}</Card.Content> : '' }
         <Card.Content>
           Shared with {sharedWith.length} people.<br/>
-          <CardSharingModal
+          <ContactSharingModal
             user={user}
             info={info}
             setMessage={setMessage}

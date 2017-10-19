@@ -1,5 +1,5 @@
 function pluralize(number, string) {
-  if (number === 0) {
+  if (number === 1) {
     return `${number} ${string}`;
   } else {
     return `${number} ${string}s`;
