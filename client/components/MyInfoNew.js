@@ -12,6 +12,8 @@ import { validateContactInfoForm, containsErrors } from '../utils/contactInfoVal
 import { parsePhoneNumber } from '../utils/formValidation';
 import translateAPIerrors from '../utils/translateAPIerrors';
 
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
+
 const defaultData = {
   empty: {},
   address: {
@@ -165,7 +167,7 @@ class MyInfoNew extends Component {
     const { form } = this.state;
     const { edit, infoID, setMessage, updateInfo } = this.props;
     if (edit) form._id = infoID;
-    axios.post('/api/my-info/upsert', form)
+    axios.post('/api/my-info/upsert', form, postHeaders)
       .then(res => {
         if (res.status === 200) {
           setMessage({
@@ -177,7 +179,7 @@ class MyInfoNew extends Component {
           this.onClose();
         }
       }).catch(err => {
-        this.setMessage({
+        setMessage({
           content: `Error: ${translateAPIerrors(err.response.data.reason)}`,
           negative: true,
           duration: 4500

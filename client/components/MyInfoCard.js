@@ -9,6 +9,7 @@ import MyInfoNew from './MyInfoNew';
 import ContactSharingModal from './ContactSharingModal';
 
 import translateAPIerrors from '../utils/translateAPIerrors';
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
 
 class MyInfoCard extends Component {
   constructor(props) {
@@ -47,7 +48,7 @@ class MyInfoCard extends Component {
   }
   handleDelete() {
     const { info, updateInfo, setMessage } = this.props;
-    axios.post('/api/my-info/delete', { id: info._id, type: info.type, label: info.label})
+    axios.post('/api/my-info/delete', { id: info._id, type: info.type, label: info.label}, postHeaders)
       .then(response => {
         if (response.data.success) {
           setMessage({

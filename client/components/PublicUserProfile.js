@@ -10,6 +10,8 @@ import ConfirmActionModal from './ConfirmActionModal';
 import { setMessage } from '../utils/messages';
 import translateAPIerrors from '../utils/translateAPIerrors';
 
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
+
 class PublicUserProfile extends Component {
   constructor(props) {
     super(props);
@@ -65,7 +67,7 @@ class PublicUserProfile extends Component {
       const { profile } = this.state;
       const { _id, firstName, lastName } = profile;
       const fullName = `${firstName} ${lastName}`;
-      axios.post(`/api/user/${action}`, { targetID: _id, name: `${fullName}` })
+      axios.post(`/api/user/${action}`, { targetID: _id, name: `${fullName}` }, postHeaders)
         .then(response => {
           if (response.data.success) {
             this.props.refreshUser();

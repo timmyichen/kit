@@ -11,6 +11,7 @@ import MessageHeader from './MessageHeader';
 
 import { setMessage } from '../utils/messages';
 import translateAPIerrors from '../utils/translateAPIerrors';
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
 
 const inputFields = [
   { name: 'firstName', label: 'First Name' },
@@ -125,7 +126,7 @@ class Welcome extends Component {
   }
   
   submitForm() {
-    axios.post('/api/registration/new', this.state.form)
+    axios.post('/api/registration/new', this.state.form, postHeaders)
       .then(res => {
         if (res.status === 200) {
           this.setMessage({

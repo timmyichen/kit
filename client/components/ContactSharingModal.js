@@ -7,6 +7,7 @@ import FriendSharingListing from './FriendSharingListing';
 
 import { getDataFrom } from '../actions/getDataFrom';
 import translateAPIerrors from '../utils/translateAPIerrors';
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
 
 class ContactSharingModal extends Component {
   constructor(props) {
@@ -52,7 +53,7 @@ class ContactSharingModal extends Component {
     axios.post('/api/share/by-contact', {
       sharedWith: this.state.friendsShared,
       contactID: this.props.info._id,
-    }).then(res => {
+    }, postHeader).then(res => {
       if (res.status === 200) {
         setMessage({
           content: `Success: saved sharing permissions for '${label}'`,

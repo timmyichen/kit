@@ -4,6 +4,7 @@ import propTypes from 'prop-types';
 import axios from 'axios';
 
 import translateAPIerrors from '../utils/translateAPIerrors';
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
 
 class FriendSharingModal extends Component {
   constructor(props) {
@@ -43,7 +44,7 @@ class FriendSharingModal extends Component {
     const toShare = this.state.isShared;
     const { setMessage, friend } = this.props;
     const targetID = friend._id;
-    axios.post('/api/share/by-user', { toShare, targetID })
+    axios.post('/api/share/by-user', { toShare, targetID }, postHeaders)
       .then(response => {
         if (response.status === 200) {
           setMessage({

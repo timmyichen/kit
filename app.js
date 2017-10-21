@@ -20,6 +20,8 @@ const startServer = () => {
   MongoClient.connect(config.keys.mongoURI, (err, db) => {
     if (err) console.log(`Failed to connect to the database: ${err.stack}`);
     
+    app.disable( 'x-powered-by' ) ;
+    
     const logger = new (winston.Logger)({
       transports: [
         new winston.transports.Console({ timestamp: true }),
@@ -43,7 +45,7 @@ const startServer = () => {
       store: new MongoStore({ db }),
       saveUninitialized: false,
       resave: false,
-      name: 'connect.sid.kit',
+      name: 'sessionid',
     }));
     
     app.use(express.static('public'));
@@ -54,6 +56,12 @@ const startServer = () => {
     
     require('./services/auth/authRoutes')(app);
     
+    app.use(require('csurf')({ cookie: true }));
+    app.use((req, res, next) => {
+      res.locals._csrfToken = req.csrfToken();
+      next();
+    });
+    
     app.use('/api', apiRoutes);
     
     app.use('/', requireSetup);
@@ -63,7 +71,8 @@ const startServer = () => {
     
     app.get('*', recordActivity, (req, res) => {
       res.render('pages/index', {
-        appname: config.APPNAME
+        appname: config.APPNAME,
+        token: res.locals._csrfToken,
       });
     });
   

@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { Card, Button } from 'semantic-ui-react';
 import axios from 'axios';
 
+const postHeaders = require('../utils/misc').getCsrfPostHeader();
+
 class PendingFriendRequests extends Component {
   constructor(props) {
     super(props);
@@ -11,7 +13,7 @@ class PendingFriendRequests extends Component {
   handleClick(action) {
     const { req, refreshUser, setMessage, refreshRequests } = this.props;
     const pastTense = { accept: 'accepted', decline: 'declined' };
-    axios.post(`/api/user/${action}-friend`, { targetID: req._id })
+    axios.post(`/api/user/${action}-friend`, { targetID: req._id }, postHeaders)
       .then(response => {
         const { success, reason } = response.data;
         const params = {};

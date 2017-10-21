@@ -27,13 +27,14 @@ function requiresWelcome(db, id) {
           reject(err);
           return;
         }
+        const { firstName, lastName, username, email, birthday, gender } = docs[0]
         resolve(
-            !docs[0].firstName ||
-            !docs[0].lastName ||
-            !docs[0].username ||
-            !docs[0].email ||
-            !docs[0].birthday ||
-            !docs[0].gender
+            !firstName ||
+            !lastName ||
+            !username ||
+            !email ||
+            !birthday ||
+            !gender
         )
       })
   });
