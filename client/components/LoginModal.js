@@ -28,6 +28,9 @@ class LoginModal extends Component {
         <Modal.Content>
           {authMethods.map(this.renderAuthButton.bind(this))}
         </Modal.Content>
+        <Modal.Description>
+          <p>Note: None of your social media accounts will have access to the data that you put on your KIT account.</p>
+        </Modal.Description>
       </Modal>
     );
   }
