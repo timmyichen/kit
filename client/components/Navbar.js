@@ -18,14 +18,8 @@ class Navbar extends Component {
         <Menu.Item as={Link} to="/contact-infos">
           Address Book
         </Menu.Item>
-        <Menu.Item as={Link} to="/my-friends">
-          Friends
-        </Menu.Item>
         <Menu.Item as="a">
           Account
-        </Menu.Item>
-        <Menu.Item as="a">
-          <Icon name="info circle" />
         </Menu.Item>
       </Menu.Menu>
     );

@@ -22,6 +22,41 @@ router.get('/profile/:username', requireLogin, (req, res) => {
     });
 });
 
+/*  /api/user/search
+    GET
+    params: ?query=
+    returns top 20 results from search ordered by mutual friends */
+router.get('/search', requireLogin, (req, res) => {
+  const { query } = req.query;
+  const { _id, friends } = req.user;
+  const { db, logger } = req.app.locals;
+  if (query.length === 0) {
+    return res.send([]);
+  }
+  const queryRegex = new RegExp(query, 'i');
+  const friendIDs = friends.map(f => ObjectID(f));
+  friendIDs.push(_id);
+  db.collection('users').find(
+    // { $or: [{ fullName: { $regex: queryRegex } }, { username: { $regex: queryRegex } }] },
+    { $and: [
+      { _id: { $not: { $in: friendIDs } } },
+      { $or: [{ fullName: queryRegex }, { username: queryRegex }] },
+    ]},
+    { _id: 1, fullName: 1, username: 1, friends: 1 }
+  ).toArray((err, docs) => {
+    if(err) {
+      logger.error(`in doing search for user ${_id} and query ${query}`, err);
+      return res.status(500).send({ reason: 'unknown' });
+    }
+    const withMutualFriends = docs.map(user => {
+      user.mutualCount = friends.filter(f => user.friends.includes(f)).length;
+      delete user.friends;
+      return user;
+    });
+    res.send(withMutualFriends);
+  });
+});
+
 /*  /api/user/friends-list
     GET
     array of friends (firstname, lastname, username) */

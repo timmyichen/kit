@@ -40,6 +40,7 @@ router.post('/new', requireLogin, finishedSetup, (req, res) => {
       { $set: {
         firstName: data.firstName,
         lastName: data.lastName,
+        fullName: data.firstName + ' ' + data.lastName,
         username: data.username,
         birthday: moment(data.birthday).unix() * 1000,
         gender: data.gender,

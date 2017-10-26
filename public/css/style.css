@@ -53,3 +53,7 @@ body .tabbed {
 .profile-page .subtitle {
   margin-top: 0;
 }
+.user-search .aligned.column {
+  margin-top: 14px !important;
+  padding: 0 24px !important;
+}

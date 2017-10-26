@@ -5,7 +5,6 @@ import propTypes from 'prop-types';
 import MessageHeader from './MessageHeader';
 import FriendListing from './FriendListing';
 
-import { setMessage } from '../utils/messages';
 import { getDataFrom } from '../actions/getDataFrom';
 
 class FriendsPage extends Component {
@@ -13,11 +12,9 @@ class FriendsPage extends Component {
     super(props);
     this.state = {
       friends: {},
-      allInfos: [],
-      message: null,
+      allInfos: []
     };
     
-    this.setMessage = setMessage.bind(this);
     this.loadDataToState = this.loadDataToState.bind(this);
   }
   componentDidMount() {
@@ -52,7 +49,7 @@ class FriendsPage extends Component {
             key={`friend-${friend.username}`}
             info={friend}
             allInfos={allInfos}
-            setMessage={this.setMessage}
+            setMessage={this.props.setMessage}
             refreshData={this.loadDataToState}
           />
         )}
