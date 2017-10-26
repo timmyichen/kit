@@ -64,12 +64,11 @@ const startServer = () => {
     
     app.use('/api', apiRoutes);
     
-    app.use('/', requireSetup);
     app.engine('njk', engines.nunjucks);
     app.set('view engine', 'njk');
     app.set('views', __dirname + '/views');
     
-    app.get('*', recordActivity, (req, res) => {
+    app.get('*', requireSetup, recordActivity, (req, res) => {
       res.render('pages/index', {
         appname: config.APPNAME,
         token: res.locals._csrfToken,

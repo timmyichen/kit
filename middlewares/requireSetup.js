@@ -4,7 +4,7 @@ const ObjectID = require('mongodb').ObjectID;
 
 module.exports = (req, res, next) => {
 	const { db, logger } = req.app.locals;
-	if (!req.user || req.path === '/welcome') {
+	if (!req.user || req.originalUrl !== '/welcome') {
 	  return next();
 	}
   db.collection('users')
@@ -17,6 +17,8 @@ module.exports = (req, res, next) => {
       if (!docs[0].firstName || !docs[0].lastName || !docs[0].username ||
           !docs[0].email || !docs[0].birthday || !docs[0].gender) { // if something is incomplete
         res.redirect('/welcome');
+      } else if (req.originalUrl === '/welcome') {
+        res.redirect('/')
       } else {
         next();
       }
