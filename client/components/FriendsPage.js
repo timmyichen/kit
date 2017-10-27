@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Container, Header } from 'semantic-ui-react';
+import { Container, Header, Input } from 'semantic-ui-react';
 import propTypes from 'prop-types';
 
 import MessageHeader from './MessageHeader';
@@ -11,46 +11,55 @@ class FriendsPage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      friends: {},
-      allInfos: []
-    };
-    
-    this.loadDataToState = this.loadDataToState.bind(this);
+      query: '',
+      visibleFriends: [],
+    }
+    this.updateInfo = this.updateInfo.bind(this);
+    this.handleSearch = this.handleSearch.bind(this);
   }
   componentDidMount() {
-    this.loadDataToState();
+    this.updateInfo(this.props);
   }
-  loadDataToState() {
-    const getFriendsList = getDataFrom('/api/user/friends-list');
-    const getMyInfo = getDataFrom('/api/my-info');
-    Promise.all([getFriendsList, getMyInfo])
-      .then(values => {
-        const friends = values[0].reduce((obj, friend) => {
-          obj[friend._id] = friend;
-          obj[friend._id].infosShared = [];
-          return obj;
-        }, {});
-        values[1].map(info => {
-          info.sharedWith.forEach(user => {
-            friends[user].infosShared.push(info);
-          });
-        });
-        this.setState({ friends, allInfos: values[1] });
-      });
+  componentWillReceiveProps(nextProps) {
+    this.updateInfo(nextProps);
+  }
+  updateInfo(props) {
+    const { query } = this.state;
+    const { friends } = props;
+    this.setState({ visibleFriends: this.filterFriends(friends, query) });
+  }
+  filterFriends(friends, query) {
+    if (query === '') return Object.values(friends);
+    const re = new RegExp(query, 'i');
+    return Object.values(friends).filter(friend => re.test(friend.username) || re.test(friend.fullName));
+  }
+  handleSearch(event, data) {
+    const query = data.value;
+    const { friends } = this.props;
+    this.setState({
+      query,
+      visibleFriends: this.filterFriends(friends, query)
+    })
   }
   render() {
-    const { message, friends, allInfos } = this.state;
+    const { visibleFriends, query } = this.state;
+    const { setMessage, allInfos, refreshData } = this.props;
     return (
-      <Container>
-        <MessageHeader message={message} />
+      <Container id='friends-page'>
         <Header as="h1">My Friends</Header>
-        {Object.values(friends).map(friend => 
+        <Input fluid
+          icon="search"
+          placeholder="Search by name or username.."
+          onChange={this.handleSearch}
+          value={query}
+        />
+        {visibleFriends.map(friend => 
           <FriendListing
             key={`friend-${friend.username}`}
             info={friend}
             allInfos={allInfos}
-            setMessage={this.props.setMessage}
-            refreshData={this.loadDataToState}
+            setMessage={setMessage}
+            refreshData={refreshData}
           />
         )}
       </Container>

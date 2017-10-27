@@ -21,7 +21,7 @@ class Dashboard extends Component {
     const { user, refreshUser } = this.props;
     const { message } = this.state;
     return (
-      <Container>
+      <Container id="dashboard">
         <MessageHeader message={message} />
         <Header as="h1">Dashboard</Header>
         <PendingFriendRequests

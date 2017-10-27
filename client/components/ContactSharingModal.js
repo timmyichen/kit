@@ -7,7 +7,8 @@ import FriendSharingListing from './FriendSharingListing';
 
 import { getDataFrom } from '../actions/getDataFrom';
 import translateAPIerrors from '../utils/translateAPIerrors';
-const postHeaders = require('../utils/misc').getCsrfPostHeader();
+
+const postHeader = require('../utils/misc').getCsrfPostHeader();
 
 class ContactSharingModal extends Component {
   constructor(props) {

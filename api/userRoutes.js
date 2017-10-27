@@ -65,7 +65,7 @@ router.get('/friends-list', requireLogin, (req, res) => {
   const friendsList = req.user.friends.map(friend => ObjectID(friend));
   db.collection('users').find(
     { _id: { $in: friendsList }},
-    { _id: 1, firstName: 1, lastName: 1, lastActive: 1, username: 1, birthday: 1 }
+    { _id: 1, fullName: 1, firstName: 1, lastName: 1, lastActive: 1, username: 1, birthday: 1 }
   ).toArray((err, docs) => {
     if (err) {
       logger.error(`in fetching friends list for ${req.user._id + ''}`, err);

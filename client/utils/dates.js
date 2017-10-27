@@ -10,8 +10,8 @@ function getNextDate(targetDate) {
   const nowDate = now.getDate();
   let year = now.getFullYear();
   
-  if (targetMonth < nowMonth || (targetMonth === nowMonth && targetDate < nowDate)) {
-    year = now.getFullYear() + 1;
+  if (targetMonth < nowMonth || (targetMonth === nowMonth && targetDay < nowDate)) {
+    year += 1;
   }
   
   const nextDate = moment(`${year}-${targetMonth+1}-${targetDay}`, "YYYY-MM-DD").unix()*1000;

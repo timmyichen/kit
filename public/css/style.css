@@ -13,6 +13,9 @@ body .split-half {
 body .tabbed {
   padding-left: 10px;
 }
+.hidden {
+  display: none;
+}
 #navbar {
   background: transparent;
   color: #302f7f;
@@ -56,4 +59,49 @@ body .tabbed {
 .user-search .aligned.column {
   margin-top: 14px !important;
   padding: 0 24px !important;
+}
+#friends-page .friend-card {
+  border: 1px solid #87ceeb;
+  border-radius: 5px;
+  margin: 15px;
+  padding: 15px;
+}
+#friends-page .friend-card .primary-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#friends-page .friend-card .primary-info .left {
+  width: 40%;
+}
+#friends-page .friend-card .primary-info .left .extras {
+  margin-top: 5px;
+}
+#friends-page .friend-card .primary-info .left .extras a {
+  cursor: pointer;
+}
+#friends-page .friend-card .primary-info .left .extras p:last-of-type {
+  margin-bottom: 0;
+}
+#friends-page .friend-card .primary-info .right {
+  width: 50%;
+}
+#friends-page .friend-card .primary-info .right table {
+  border: none;
+}
+#friends-page .friend-card .primary-info .right table td {
+  padding: 5px 0;
+}
+#friends-page .friend-card .more {
+  text-align: center;
+}
+#friends-page .friend-card .more a {
+  cursor: pointer;
+}
+#dashboard #upcoming-birthdays .dropdown.select {
+  padding: 5px 15px;
+  background: #fff;
+  margin: 0 5px;
+  border: 1px solid #d3d3d3;
+  border-radius: 3px;
 }

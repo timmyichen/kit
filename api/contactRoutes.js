@@ -57,6 +57,7 @@ router.get('/my-info/', requireLogin, (req, res) => {
 router.post('/my-info/upsert', requireLogin, (req, res) => {
   const { db, logger } = req.app.locals;
   const obj = req.body;
+  delete obj._csrf;
   const errors = validateContactInfoForm(obj);
   if (containsErrors(errors)) {
     logger.error(`${req.user.email} tried to create new contactinfo w/ bad information`, errors);

@@ -12,6 +12,7 @@ function getUserObject(profile, provider) {
     email: profile.emails[0].value,
     firstName: profile.name.givenName,
     lastName: profile.name.familyName,
+    fullName: profile.name.givenName + ' ' + profile.name.familyName,
     gender: profile.gender,
     lastActive: Date.now(),
     joined: Date.now(),
@@ -25,6 +26,7 @@ function getUserObject(profile, provider) {
     blocked: [],
     blockedBy: [],
     notifications: [],
+    groups: [],
   };
 }
 

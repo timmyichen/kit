@@ -18,6 +18,8 @@ class AddressBook extends Component {
     this.state = {
       message: null,
       messageTimeoutID: null,
+      friends: {},
+      allInfos: [],
       tabs: [
         { menuItem: 'My Friends', render: () => (
           <Tab.Pane>
@@ -25,6 +27,9 @@ class AddressBook extends Component {
               setMessage={this.setMessage}
               user={props.user}
               refreshUser={props.refreshUser}
+              friends={this.state.friends}
+              allInfos={this.state.allInfos}
+              refreshData={this.loadDataToState}
             />
           </Tab.Pane>
         ) },
@@ -36,7 +41,7 @@ class AddressBook extends Component {
             />
           </Tab.Pane>
         ) },
-      ]
+      ],
     };
     
     this.setMessage = setMessage.bind(this);
@@ -46,9 +51,26 @@ class AddressBook extends Component {
     this.loadDataToState();
   }
   loadDataToState() {
-    getDataFrom('/api/contacts')
-      .then(response => {
-        this.setState({ users: response.users, infos: response.infos });
+    const getFriendsList = getDataFrom('/api/user/friends-list');
+    const getMyInfo = getDataFrom('/api/my-info');
+    const getContactInfos = getDataFrom('/api/contacts');
+    Promise.all([getFriendsList, getMyInfo, getContactInfos])
+      .then(values => {
+        const friends = values[0].reduce((obj, friend) => {
+          obj[friend._id] = friend;
+          obj[friend._id].sharedWithFriend = [];
+          obj[friend._id].sharedWithUser = [];
+          return obj;
+        }, {});
+        values[1].map(info => {
+          info.sharedWith.forEach(user => {
+            friends[user].sharedWithFriend.push(info);
+          });
+        });
+        values[2].infos.map(info => {
+          friends[info.owner].sharedWithUser.push(info);
+        });
+        this.setState({ friends, allInfos: values[1],  });
       });
   }
   render() {

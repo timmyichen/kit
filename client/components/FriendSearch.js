@@ -31,7 +31,7 @@ class FriendSearch extends Component {
               results: values
             });
           })
-      }, 2000)
+      }, 1500)
     });
   }
   renderResult(user, i) {
@@ -62,7 +62,7 @@ class FriendSearch extends Component {
       <Container>
         <Input fluid
           icon="search"
-          placeholder='Search by name or username..'
+          placeholder="Search by name or username.."
           value={query}
           loading={Boolean(queryTimeout)}
           onChange={this.handleInput}
