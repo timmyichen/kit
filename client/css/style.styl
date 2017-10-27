@@ -19,6 +19,9 @@ body
   .tabbed
     padding-left 10px
 
+.hidden
+  display none
+
 #navbar
   background transparent
   color darkshades
@@ -62,3 +65,38 @@ body
   .aligned.column
     margin-top 14px !important
     padding 0 24px !important
+
+#friends-page
+  .friend-card
+    border 1px solid skyblue
+    border-radius 5px
+    margin 15px
+    padding 15px
+    .primary-info
+      display flex
+      justify-content space-between
+      align-items center
+      .left
+        width 40%
+        .extras
+          a
+            cursor pointer
+      .right
+        width 50%
+        table
+          border none
+          td
+            padding 5px 0
+    .more
+      text-align center
+      a
+        cursor pointer
+
+#dashboard
+  #upcoming-birthdays
+    .dropdown.select
+      padding 5px 15px
+      background white
+      margin 0 5px
+      border 1px solid lightgray
+      border-radius 3px
